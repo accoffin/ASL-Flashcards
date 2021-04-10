@@ -2,7 +2,7 @@ const router = require("express").Router();
 const Flashcard = require("../models/Flashcard.model");
 
 /* GET home page */
-router.get("/", (req, res, next) => {
+router.get("/flashcards", (req, res, next) => {
   Flashcard.find({})
     .then((flashcards) => {
       res.render("flashcard/index", flashcards);
@@ -13,11 +13,11 @@ router.get("/", (req, res, next) => {
     });
 });
 
-router.get("/new", (req, res, next) => {
+router.get("/flashcard/new", (req, res, next) => {
   res.render("flashcard/new");
 });
 
-router.post("/new", (req, res, next) => {
+router.post("/flashcard/new", (req, res, next) => {
   const { name, gifURL, dummyAnswers } = req.body;
   Flashcard.create({
     name,
@@ -26,7 +26,7 @@ router.post("/new", (req, res, next) => {
   })
     .then((flashcard) => {
       console.log(`created flashcard for: ${flashcard.name}`);
-      res.redirect("/new");
+      res.redirect("/flashcards");
     })
     .catch((error) => {
       console.log(error);
