@@ -17,7 +17,7 @@ userSchema.pre("save", function (next) {
   // ENCRYPT PASSWORD
   const user = this;
   if (!user.isModified("password")) {
-    return next();nable
+    return next();
   }
   bcryptjs.genSalt(10, (err, salt) => {
     bcryptjs.hash(user.password, salt, (err, hash) => {
@@ -27,7 +27,12 @@ userSchema.pre("save", function (next) {
   });
 });
 
-// Now make a function to e
+// Now make a function to enable this.password to work.
+userSchema.methods.comparePassword = function (password, done) {
+  bcrypt.compare(password, this.password, (err, isMatch) => {
+    done(err, isMatch);
+  });
+};
 
 const User = model("User", userSchema);
 
