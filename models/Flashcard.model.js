@@ -10,7 +10,7 @@ const flashCardSchema = new Schema({
     type: String,
     required: [true, "No URL for gif"],
   },
-  dummy: {
+  dummyAnswers: {
     type: [String],
   },
 });
