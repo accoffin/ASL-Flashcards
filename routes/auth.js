@@ -1,3 +1,4 @@
+const jwt = require('jsonwebtoken');
 const router = require("express").Router();
 
 // ℹ️ Handles password encryption
@@ -139,17 +140,6 @@ router.post("/login", shouldNotBeLoggedIn, (req, res, next) => {
       next(err);
       // return res.status(500).render("login", { errorMessage: err.message });
     });
-});
-
-router.get("/logout", isLoggedIn, (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res
-        .status(500)
-        .render("auth/logout", { errorMessage: err.message });
-    }
-    res.redirect("/");
-  });
 });
 
 module.exports = router;
