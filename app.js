@@ -32,7 +32,7 @@ const authRoutes = require("./routes/auth");
 app.use("/auth", authRoutes);
 
 const flashcardRoutes = require("./routes/flashcard");
-app.use("/flashcard", flashcardRoutes);
+app.use("/", flashcardRoutes);
 
 // ❗ To handle errors. Routes that don't exist or errors that you handle in specific routes
 require("./error-handling")(app);

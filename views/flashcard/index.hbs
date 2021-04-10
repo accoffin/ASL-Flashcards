@@ -2,5 +2,7 @@
   <h1>New Flashcard</h1>
 </a>
 {{#each this}}
-<h3>this.name</h3>
+{{#if this.name}}
+<h3>{{this.name}}</h3>
+{{/if}}
 {{/each}}
