@@ -29,7 +29,7 @@ const index = require("./routes/index");
 app.use("/", index);
 
 const authRoutes = require("./routes/auth");
-app.use("/auth", authRoutes);
+app.use("/", authRoutes);
 
 const flashcardRoutes = require("./routes/flashcard");
 app.use("/", flashcardRoutes);

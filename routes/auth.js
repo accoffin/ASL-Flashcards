@@ -15,11 +15,11 @@ const User = require("../models/User.model");
 const shouldNotBeLoggedIn = require("../middlewares/shouldNotBeLoggedIn");
 const isLoggedIn = require("../middlewares/isLoggedIn");
 
-router.get("/signup", shouldNotBeLoggedIn, (req, res) => {
+router.get("/signup", shouldNotBeLoggedIn, (req, res, next) => {
   res.render("auth/signup");
 });
 
-router.post("/signup", shouldNotBeLoggedIn, (req, res) => {
+router.post("/signup", shouldNotBeLoggedIn, (req, res, next) => {
   const { username, password } = req.body;
 
   if (!username) {
@@ -90,7 +90,7 @@ router.post("/signup", shouldNotBeLoggedIn, (req, res) => {
   });
 });
 
-router.get("/login", shouldNotBeLoggedIn, (req, res) => {
+router.get("/login", shouldNotBeLoggedIn, (req, res, next) => {
   res.render("auth/login");
 });
 
@@ -141,7 +141,5 @@ router.post("/login", shouldNotBeLoggedIn, (req, res, next) => {
       // return res.status(500).render("login", { errorMessage: err.message });
     });
 });
-
-
 
 module.exports = router;
