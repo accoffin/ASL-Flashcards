@@ -80,7 +80,7 @@ router.post("/signup", shouldNotBeLoggedIn, (req, res, next) => {
         if (error.code === 11000) {
           return res.status(400).render("auth/signup", {
             errorMessage:
-              "Username need to be unique. The username you chose is already in use.",
+              "Username needs to be unique. The username you chose is already in use.",
           });
         }
         return res
