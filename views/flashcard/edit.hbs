@@ -1,0 +1,23 @@
+<a href="/flashcards">
+  <h1>Back</h1>
+</a>
+
+<h1>{{errorMessage}}</h1>
+
+<form action="/flashcard/{{flashcard.id}}" method="POST">
+  <div>
+    <label>Name: </label>
+    <input type="text" name="name" placeholder={{flashcard.name}}>
+  </div>
+  <div>
+    <label>Gif URL:</label>
+    <input type="text" name="gifURL" placeholder={{flashcard.gifURL}}>
+  </div>
+  <div>
+    <label>Just one dummy answer for now: </label>
+    {{#each flashcard.dummyAnswers}}
+    <input type="text" name="[dummyAnswers]" placeholder={{this}}>
+    {{/each}}
+  </div>
+  <button>Update</button>
+</form>
