@@ -3,6 +3,8 @@
 </a>
 {{#each this}}
 {{#if this.name}}
-<h3>{{this.name}}</h3>
+<a href="/flashcard/{{this.id}}">
+  <h3>{{this.name}}</h3>
+</a>
 {{/if}}
 {{/each}}

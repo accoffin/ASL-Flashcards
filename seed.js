@@ -2,9 +2,7 @@ require("dotenv").config();
 const Flashcard = require("./models/Flashcard.model");
 const mongoose = require("mongoose");
 
-const DB_NAME = "ASL-Flashcards";
-
-mongoose.connect(`mongodb://localhost/${DB_NAME}`, {
+mongoose.connect(process.env.MONGODB_URI, {
   useCreateIndex: true,
   useNewUrlParser: true,
   useUnifiedTopology: true,

@@ -34,4 +34,60 @@ router.post("/flashcard/new", (req, res, next) => {
     });
 });
 
+router.get("/flashcard/:id", (req, res, next) => {
+  Flashcard.findById(req.params.id)
+    .then((flashcard) => {
+      console.log(`showing flashcard for: ${flashcard.name}`);
+      res.render("flashcard/detail.hbs", flashcard);
+    })
+    .catch((error) => {
+      console.log(error);
+      next(error);
+    });
+});
+
+router.get("/flashcard/:id/edit", (req, res, next) => {
+  Flashcard.findById(req.params.id)
+    .then((flashcard) => {
+      console.log(`editing flashcard for: ${flashcard.name}`);
+      res.render("flashcard/edit.hbs", { flashcard: flashcard });
+    })
+    .catch((error) => {
+      console.log(error);
+      next(error);
+    });
+});
+
+router.post("/flashcard/:id", (req, res, next) => {
+  const { name, gifURL, dummyAnswers } = req.body;
+  Flashcard.findByIdAndUpdate(req.params.id, {
+    name,
+    gifURL,
+    dummyAnswers,
+  })
+    .then((flashcard) => {
+      console.log(`updated flashcard for: ${flashcard.name}`);
+      res.redirect("/flashcards");
+    })
+    .catch((error) => {
+      console.log(error);
+      res.render("flashcard/edit", {
+        flashcard: flashcard,
+        errorMessage: error,
+      });
+    });
+});
+
+router.post("/flashcard/:id/delete", (req, res, next) => {
+  Flashcard.findByIdAndRemove(req.params.id)
+    .then((flashcard) => {
+      console.log(`Deleted flashcard for: ${flashcard.name}`);
+      res.redirect("/flashcards");
+    })
+    .catch((error) => {
+      console.log(error);
+      next(error);
+    });
+});
+
 module.exports = router;
