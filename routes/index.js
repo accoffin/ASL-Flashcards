@@ -17,3 +17,4 @@ router.get("/deafAF", (req, res, next) => {
 });
 
 module.exports = router;
+ 

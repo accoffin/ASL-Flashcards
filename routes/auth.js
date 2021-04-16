@@ -15,12 +15,16 @@ const User = require("../models/User.model");
 const shouldNotBeLoggedIn = require("../middlewares/shouldNotBeLoggedIn");
 const isLoggedIn = require("../middlewares/isLoggedIn");
 
+
+// ------------------------------------- Sign Up ------------------------------------------------//
+
+
 router.get("/signup", shouldNotBeLoggedIn, (req, res, next) => {
   res.render("auth/signup");
 });
 
 router.post("/signup", shouldNotBeLoggedIn, (req, res, next) => {
-  const { username, password } = req.body;
+  const { username, password, isAdmin } = req.body;
 
   if (!username) {
     return res
@@ -64,6 +68,7 @@ router.post("/signup", shouldNotBeLoggedIn, (req, res, next) => {
         return User.create({
           username,
           password: hashedPassword,
+          isAdmin,
         });
       })
       .then((user) => {
@@ -89,6 +94,10 @@ router.post("/signup", shouldNotBeLoggedIn, (req, res, next) => {
       });
   });
 });
+
+
+//----------------------------------------- LOGIN --------------------------------------//
+
 
 router.get("/login", shouldNotBeLoggedIn, (req, res, next) => {
   res.render("auth/login");
@@ -129,7 +138,7 @@ router.post("/login", shouldNotBeLoggedIn, (req, res, next) => {
             .render("auth/login", { errorMessage: "Wrong credentials." });
         }
         req.session.user = user;
-        // req.session.user = user._id; // ! better and safer but in this case we saving the entire user object
+        // req.session.user = user._id; // ! better and safer but in this case we are saving the entire user object
         return res.redirect("/");
       });
     })
@@ -141,5 +150,14 @@ router.post("/login", shouldNotBeLoggedIn, (req, res, next) => {
       // return res.status(500).render("login", { errorMessage: err.message });
     });
 });
+router.get("/logout", (req, res, next) => {
+  req.session.destroy();
+  res.redirect("/");
+});
+
+
+//---------------------------------------------LOG OUT -----------------------------------------------//
+
+
 
 module.exports = router;
