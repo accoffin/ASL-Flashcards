@@ -138,7 +138,7 @@ router.post("/login", shouldNotBeLoggedIn, (req, res, next) => {
             .render("auth/login", { errorMessage: "Wrong credentials." });
         }
         req.session.user = user;
-        // req.session.user = user._id; // ! better and safer but in this case we saving the entire user object
+        // req.session.user = user._id; // ! better and safer but in this case we are saving the entire user object
         return res.redirect("/");
       });
     })
@@ -149,6 +149,10 @@ router.post("/login", shouldNotBeLoggedIn, (req, res, next) => {
       next(err);
       // return res.status(500).render("login", { errorMessage: err.message });
     });
+});
+router.get("/logout", (req, res, next) => {
+  req.session.destroy();
+  res.redirect("/");
 });
 
 
