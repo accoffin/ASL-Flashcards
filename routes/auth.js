@@ -20,7 +20,7 @@ router.get("/signup", shouldNotBeLoggedIn, (req, res, next) => {
 });
 
 router.post("/signup", shouldNotBeLoggedIn, (req, res, next) => {
-  const { username, password } = req.body;
+  const { username, password, isAdmin } = req.body;
 
   if (!username) {
     return res
@@ -64,6 +64,7 @@ router.post("/signup", shouldNotBeLoggedIn, (req, res, next) => {
         return User.create({
           username,
           password: hashedPassword,
+          isAdmin,
         });
       })
       .then((user) => {
