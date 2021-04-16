@@ -9,7 +9,7 @@ const userSchema = new Schema({
     unique: true,
   },
   password: String,
-  isAdmin: false, //if 'true' user will have access to flashcard.create page.
+  isAdmin: { type: String, default: false }, //if 'true' user will have access to flashcard.create page.
 });
 
 userSchema.pre("save", function (next) {
