@@ -10,6 +10,7 @@ const userSchema = new Schema({
   },
   password: String,
   isAdmin: { type: String, default: false }, //if 'true' user will have access to flashcard.create page.
+  decks: [{ type: Schema.Types.ObjectId, ref: "Deck" }],
 });
 
 userSchema.pre("save", function (next) {
