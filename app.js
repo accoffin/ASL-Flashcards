@@ -34,6 +34,9 @@ app.use("/", authRoutes);
 const flashcardRoutes = require("./routes/flashcard");
 app.use("/", flashcardRoutes);
 
+const deckRoutes = require("./routes/deck");
+app.use("/", deckRoutes);
+
 // ❗ To handle errors. Routes that don't exist or errors that you handle in specific routes
 require("./error-handling")(app);
 
