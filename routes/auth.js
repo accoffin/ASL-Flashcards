@@ -15,9 +15,7 @@ const User = require("../models/User.model");
 const shouldNotBeLoggedIn = require("../middlewares/shouldNotBeLoggedIn");
 const isLoggedIn = require("../middlewares/isLoggedIn");
 
-
 // ------------------------------------- Sign Up ------------------------------------------------//
-
 
 router.get("/signup", shouldNotBeLoggedIn, (req, res, next) => {
   res.render("auth/signup");
@@ -95,9 +93,7 @@ router.post("/signup", shouldNotBeLoggedIn, (req, res, next) => {
   });
 });
 
-
 //----------------------------------------- LOGIN --------------------------------------//
-
 
 router.get("/login", shouldNotBeLoggedIn, (req, res, next) => {
   res.render("auth/login");
@@ -127,7 +123,7 @@ router.post("/login", shouldNotBeLoggedIn, (req, res, next) => {
       if (!user) {
         return res
           .status(400)
-          .render("auth/login", { errorMessage: "Wrong credentials." });
+          .render("auth/login", { errorMessage: "Username not recognized." });
       }
 
       // If user is found based on the username, check if the in putted password matches the one saved in the database
@@ -135,7 +131,7 @@ router.post("/login", shouldNotBeLoggedIn, (req, res, next) => {
         if (!isSamePassword) {
           return res
             .status(400)
-            .render("auth/login", { errorMessage: "Wrong credentials." });
+            .render("auth/login", { errorMessage: "Incorrect password." });
         }
         req.session.user = user;
         // req.session.user = user._id; // ! better and safer but in this case we are saving the entire user object
@@ -152,12 +148,10 @@ router.post("/login", shouldNotBeLoggedIn, (req, res, next) => {
 });
 router.get("/logout", (req, res, next) => {
   req.session.destroy();
+  alert("You have been logged out.");
   res.redirect("/");
 });
 
-
 //---------------------------------------------LOG OUT -----------------------------------------------//
-
-
 
 module.exports = router;
