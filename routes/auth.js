@@ -15,9 +15,7 @@ const User = require("../models/User.model");
 const shouldNotBeLoggedIn = require("../middlewares/shouldNotBeLoggedIn");
 const isLoggedIn = require("../middlewares/isLoggedIn");
 
-
 // ------------------------------------- Sign Up ------------------------------------------------//
-
 
 router.get("/signup", shouldNotBeLoggedIn, (req, res, next) => {
   res.render("auth/signup");
@@ -74,7 +72,7 @@ router.post("/signup", shouldNotBeLoggedIn, (req, res, next) => {
       .then((user) => {
         // Bind the user to the session object
         req.session.user = user;
-        res.redirect("/");
+        res.redirect("/decks");
       })
       .catch((error) => {
         if (error instanceof mongoose.Error.ValidationError) {
@@ -95,9 +93,7 @@ router.post("/signup", shouldNotBeLoggedIn, (req, res, next) => {
   });
 });
 
-
 //----------------------------------------- LOGIN --------------------------------------//
-
 
 router.get("/login", shouldNotBeLoggedIn, (req, res, next) => {
   res.render("auth/login");
@@ -139,7 +135,7 @@ router.post("/login", shouldNotBeLoggedIn, (req, res, next) => {
         }
         req.session.user = user;
         // req.session.user = user._id; // ! better and safer but in this case we are saving the entire user object
-        return res.redirect("/");
+        return res.redirect("/decks");
       });
     })
 
@@ -155,9 +151,6 @@ router.get("/logout", (req, res, next) => {
   res.redirect("/");
 });
 
-
 //---------------------------------------------LOG OUT -----------------------------------------------//
-
-
 
 module.exports = router;
