@@ -103,9 +103,9 @@ router.post("/login", shouldNotBeLoggedIn, (req, res, next) => {
   const { username, password } = req.body;
 
   if (!username) {
-    return res.status(400).render("auth/login", {
-      errorMessage: "Please provide your username.",
-    });
+    return res
+      .status(400)
+      .render("auth/login", { errorMessage: "Please provide your username." });
   }
 
   // Here we use the same logic as above
@@ -117,39 +117,39 @@ router.post("/login", shouldNotBeLoggedIn, (req, res, next) => {
   }
 
   // Search the database for a user with the username submitted in the form
-  User.findOne({ username }).then((user) => {
-    // If the user isn't found, send the message that user provided wrong credentials
-    if (!user) {
-      return res
-        .status(400)
-        .render("auth/login", { errorMessage: "Username not recognized." });
-    }
+  User.findOne({ username })
+    .then((user) => {
+      // If the user isn't found, send the message that user provided wrong credentials
+      if (!user) {
+        return res
+          .status(400)
+          .render("auth/login", { errorMessage: "Username not recognized." });
+      }
 
-    // If user is found based on the username, check if the in putted password matches the one saved in the database
+      // If user is found based on the username, check if the in putted password matches the one saved in the database
 
-    // bcrypt.compare(password, user.password).then((isSamePassword) => {
-    //   console.log(`${password} => ${user.password}`);
-    //   if (!isSamePassword) {
-    //     return res
-    //       .status(400)
-    //       .render("auth/login", { errorMessage: "Incorrect password." });
-    //   }
-    req.session.user = user;
-    // req.session.user = user._id; // ! better and safer but in this case we are saving the entire user object
-    return res.redirect("/decks");
-  });
+      bcrypt.compare(password, user.password).then((isSamePassword) => {
+        if (!isSamePassword) {
+          return res
+            .status(400)
+            .render("auth/login", { errorMessage: "Incorrect password." });
+        }
+        req.session.user = user;
+        // req.session.user = user._id; // ! better and safer but in this case we are saving the entire user object
+        return res.redirect("/decks");
+      });
+    })
+
+    .catch((err) => {
+      // in this case we are sending the error handling to the error handling middleware that is defined in the error handling file
+      // you can just as easily run the res.status that is commented out below
+      next(err);
+      // return res.status(500).render("login", { errorMessage: err.message });
+    });
 });
-
-// .catch((err) => {
-//   // in this case we are sending the error handling to the error handling middleware that is defined in the error handling file
-//   // you can just as easily run the res.status that is commented out below
-//   next(err);
-//   // return res.status(500).render("login", { errorMessage: err.message });
-//   // });
-// });
 router.get("/logout", (req, res, next) => {
   req.session.destroy();
-  // alert("You have been logged out.");
+  alert("You have been logged out.");
   res.redirect("/");
 });
 
