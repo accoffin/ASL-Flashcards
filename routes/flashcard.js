@@ -18,11 +18,11 @@ router.get("/flashcard/new", (req, res, next) => {
 });
 
 router.post("/flashcard/new", (req, res, next) => {
-  const { name, gifURL, dummyAnswers } = req.body;
+  const { name, gifURL, category } = req.body;
   Flashcard.create({
     name,
     gifURL,
-    dummyAnswers,
+    category,
   })
     .then((flashcard) => {
       console.log(`created flashcard for: ${flashcard.name}`);
@@ -59,11 +59,11 @@ router.get("/flashcard/:id/edit", (req, res, next) => {
 });
 
 router.post("/flashcard/:id", (req, res, next) => {
-  const { name, gifURL, dummyAnswers } = req.body;
+  const { name, gifURL, category } = req.body;
   Flashcard.findByIdAndUpdate(req.params.id, {
     name,
     gifURL,
-    dummyAnswers,
+    category,
   })
     .then((flashcard) => {
       console.log(`updated flashcard for: ${flashcard.name}`);

@@ -10,8 +10,10 @@ const userSchema = new Schema({
   },
   password: String,
   isAdmin: { type: String, default: false }, //if 'true' user will have access to flashcard.create page.
+  decks: [{ type: Schema.Types.ObjectId, ref: "Deck" }],
 });
 
+// Since we are hashing the password, we don't match it here.
 userSchema.pre("save", function (next) {
   // ENCRYPT PASSWORD
   const user = this;
@@ -28,7 +30,7 @@ userSchema.pre("save", function (next) {
 
 // Now make a function to enable this.password to work.
 userSchema.methods.comparePassword = function (password, done) {
-  bcrypt.compare(password, this.password, (err, isMatch) => {
+  bcrypt.compareSync(password, this.password, (err, isMatch) => {
     done(err, isMatch);
   });
 };
