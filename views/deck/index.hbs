@@ -1,0 +1,16 @@
+<form class="new-deck-form" action="/decks/new" method="POST">
+  <input type="text" name="name">
+  <button>New Deck</button>
+</form>
+
+{{#each this}}
+{{#if this.name}}
+<div class="deck-container">
+  <p>{{this.name}}</p>
+  {{!-- TODO add urls for expressive & receptive drills --}}
+  <a href="/decks/{{this.id}}/expressive">Expressive</a>
+  <a href="/decks/{{this.id}}/receptive">Receptive</a>
+  <a href="/decks/{{this.id}}">View cards</a>
+</div>
+{{/if}}
+{{/each}}

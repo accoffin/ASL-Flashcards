@@ -1,0 +1,23 @@
+<div class="flashcard-data" hidden>
+  {{#each flashcards}}
+  <div class="name">
+    {{this.name}}
+  </div>
+  <div class="{{this.name}} gif-url">
+    {{this.gifURL}}
+  </div>
+  <div class="{{this.name}} category">
+    {{this.category}}
+  </div>
+  {{/each}}
+</div>
+
+<a href="/decks">Back</a>
+
+<h1>{{name}}</h1>
+<div class="flashcard-container">
+</div>
+
+<div class="next-button"></div>
+
+<script src="/js/expressive.js"></script>
