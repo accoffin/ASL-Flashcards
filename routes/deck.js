@@ -136,4 +136,30 @@ router.post("/decks/:id/delete", (req, res, next) => {
     });
 });
 
+router.get("/decks/:id/receptive", (req, res, next) => {
+  Deck.findById(req.params.id)
+    .populate("flashcards")
+    .then((deck) => {
+      console.log(`Started receptive training for:`, deck.name);
+      res.render("deck/receptive", deck);
+    })
+    .catch((error) => {
+      console.log(error);
+      next(error);
+    });
+});
+
+router.get("/decks/:id/expressive", (req, res, next) => {
+  Deck.findById(req.params.id)
+    .populate("flashcards")
+    .then((deck) => {
+      console.log(`Started expressive training for:`, deck.name);
+      res.render("deck/expressive", deck);
+    })
+    .catch((error) => {
+      console.log(error);
+      next(error);
+    });
+});
+
 module.exports = router;
