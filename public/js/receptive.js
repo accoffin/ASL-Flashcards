@@ -24,13 +24,14 @@ function renderCard(card) {
     ".gif-container"
   ).innerHTML = `<img class="gif" src="${card.gifURL}" alt="Error with URL">`;
   const options = new Shuffler(cards.elements.slice());
-  const rightAnswerShuffler = new Shuffler([true, false, false, false]);
+  const rightAnswerShuffler = new Shuffler([true, ...options.elements]);
   document.querySelectorAll(".response-option").forEach((option) => {
     if (!options.empty) {
-      option.innerHTML = rightAnswerShuffler.drawNext()
-        ? card.name
-        : options.drawNext().name;
-    } else option.innerHTML = rightAnswerShuffler.empty ? "" : card.name;
+      option.innerHTML =
+        rightAnswerShuffler.drawNext() === true
+          ? card.name
+          : options.drawNext().name;
+    } else option.innerHTML = card.name;
   });
 }
 
@@ -49,7 +50,6 @@ function parseFlashcardData() {
 
   cards.forEach((card) => {
     const id = card.innerHTML.trim();
-    console.log(id);
     const name = document.querySelector(`.${id}.name`).innerHTML.trim();
     const gifURL = document.querySelector(`.${id}.gif-url`).innerHTML.trim();
     const category = document.querySelector(`.${id}.category`).innerHTML.trim();
