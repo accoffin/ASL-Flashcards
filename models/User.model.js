@@ -13,7 +13,6 @@ const userSchema = new Schema({
   decks: [{ type: Schema.Types.ObjectId, ref: "Deck" }],
 });
 
-// Since we are hashing the password, we don't match it here.
 userSchema.pre("save", function (next) {
   // ENCRYPT PASSWORD
   const user = this;
