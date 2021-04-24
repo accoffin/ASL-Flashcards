@@ -1,3 +1,14 @@
-<h1>Your Profile</h1>
+<div id=profile-background>
+  <h1 class="profile-header">Your Profile</h1>
 
-<h2>Welcome {{#if user}}{{user.email}}{{else}}Stranger{{/if}}</h2>
+  <h2 class="profile-header">Welcome {{#if user}}{{user.email}}{{/if}}</h2>
+</div>
+
+<div>
+  <ul id="profile-links">
+    <li class="profile-link"><a>My Deck</a></li>
+    <li class="profile-link"><a>ASL Learning</a></li>
+    <li class="profile-link"><a>Add new card</a></li>
+    <li class="profile-link"><a>Logout</a></li>
+  </ul>
+</div>
