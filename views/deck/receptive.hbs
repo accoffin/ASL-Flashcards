@@ -1,0 +1,35 @@
+<div class="flashcard-data" hidden>
+  {{#each flashcards}}
+  <div class="id">
+    a{{this.id}}
+  </div>
+  <div class="a{{this.id}} name">
+    {{this.name}}
+  </div>
+  <div class="a{{this.id}} gif-url">
+    {{this.gifURL}}
+  </div>
+  <div class="a{{this.id}} category">
+    {{this.category}}
+  </div>
+  {{/each}}
+</div>
+
+<a href="/decks">Back</a>
+
+<h1>{{name}}</h1>
+<div>
+  <div class="gif-container"></div>
+  <ul class="responses">
+    <li class="response-option"></li>
+    <li class="response-option"></li>
+    <li class="response-option"></li>
+    <li class="response-option"></li>
+  </ul>
+</div>
+
+<div class="next-button">
+  <h1>Next</h1>
+</div>
+
+<script src="/js/receptive.js"></script>
