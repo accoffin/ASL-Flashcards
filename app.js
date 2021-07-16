@@ -19,10 +19,10 @@ const app = express();
 require("./config")(app);
 
 const projectName = "ASL-Flashcards";
-const capitalized = (string) =>
-  string[0].toUpperCase() + string.slice(1).toLowerCase();
+// const capitalized = (string) =>
+//   string[0].toUpperCase() + string.slice(1).toLowerCase();
 
-app.locals.title = `${capitalized(projectName)}`;
+app.locals.title = `${projectName}`;
 
 // 👇 Start handling routes here
 const index = require("./routes/index");
