@@ -103,9 +103,9 @@ router.post("/login", shouldNotBeLoggedIn, (req, res, next) => {
   const { username, password } = req.body;
 
   if (!username) {
-    return res.status(400).render("auth/login", {
-      errorMessage: "Please provide your username.",
-    });
+    return res
+      .status(400)
+      .render("auth/login", { errorMessage: "Please provide your username." });
   }
 
   // Here we use the same logic as above
@@ -128,7 +128,6 @@ router.post("/login", shouldNotBeLoggedIn, (req, res, next) => {
     // If user is found based on the username, check if the in putted password matches the one saved in the database
 
     // bcrypt.compare(password, user.password).then((isSamePassword) => {
-    //   console.log(`${password} => ${user.password}`);
     //   if (!isSamePassword) {
     //     return res
     //       .status(400)
@@ -145,7 +144,7 @@ router.post("/login", shouldNotBeLoggedIn, (req, res, next) => {
 //   // you can just as easily run the res.status that is commented out below
 //   next(err);
 //   // return res.status(500).render("login", { errorMessage: err.message });
-//   // });
+// });
 // });
 router.get("/logout", (req, res, next) => {
   req.session.destroy();
