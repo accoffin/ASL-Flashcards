@@ -18,7 +18,7 @@ const app = express();
 // ℹ️ This function is getting exported from the config folder. It runs most middlewares
 require("./config")(app);
 
-const projectName = "ASL-Flashcards";
+const projectName = "Deafhood";
 // const capitalized = (string) =>
 //   string[0].toUpperCase() + string.slice(1).toLowerCase();
 
