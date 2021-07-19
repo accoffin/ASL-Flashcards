@@ -1,4 +1,3 @@
-const jwt = require("jsonwebtoken");
 const router = require("express").Router();
 
 // ℹ️ Handles password encryption
