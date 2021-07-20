@@ -1,19 +1,14 @@
-const express = require("express");
-const router = express.Router();
+const router = require("express").Router();
 
-/* GET home page */
+const authRoutes = require("./auth.routes");
+
+
 router.get("/", (req, res, next) => {
-  res.render("index");
+  res.status(200).send("👋 ASL Flashcards Backend is live");
 });
 
-router.get("/profile", (req, res, next) => {
-  console.log(req.query);
-  res.render("profile", { user: req.session && req.session.user });
-});
+router.use("/auth", authRoutes);
 
-router.get("/deafAF", (req, res, next) => {
-  console.log(req.query);
-  res.render("secrets/deafAF");
-});
+//add routes for other models here
 
 module.exports = router;

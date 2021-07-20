@@ -2,7 +2,7 @@ let cards;
 let currentCard;
 
 window.addEventListener("load", () => {
-  cards = new Shuffler(parseFlashcardData());
+  cards = new Shuffler(/* */);
   currentCard = cards.drawNext();
   cards.empty ? renderEmpty() : renderCard(currentCard);
 });
@@ -42,21 +42,6 @@ function renderEmpty() {
     "<p>add some more to this deck, or refresh to practice again!</p>";
 }
 
-function parseFlashcardData() {
-  const cards = document.querySelectorAll(".id");
-
-  const flashcards = [];
-
-  cards.forEach((card) => {
-    const id = card.innerHTML.trim();
-    console.log(id);
-    const name = document.querySelector(`.${id}.name`).innerHTML.trim();
-    const gifURL = document.querySelector(`.${id}.gif-url`).innerHTML.trim();
-    const category = document.querySelector(`.${id}.category`).innerHTML.trim();
-    flashcards.push({ name, gifURL, category });
-  });
-  return flashcards;
-}
 
 class Shuffler {
   constructor(array) {

@@ -12,8 +12,9 @@ const User = require("../models/User.model");
 
 
 
-router.post("/signup", (req, res) => {
+router.post("/signup", async (req, res) => {
   const { username, password, isAdmin } = req.body;
+  const isLoggedIn = req.headers?.authorization;
   
   if (!username) {
     return res
@@ -46,8 +47,8 @@ router.post("/signup", (req, res) => {
         });
       })
       .then((user) => {
-        //TODO: send back user data for easy login (maybe password?)
-        return res.status(201).json(user);
+        console.log("User created:", user);
+        login(res, username, password, isLoggedIn, user);
       })
       .catch((error) => {
         if (error instanceof mongoose.Error.ValidationError) {
@@ -70,54 +71,69 @@ router.post("/signup", (req, res) => {
 
 
 
-router.post("/login", (req, res) => {
+router.post("/login", async (req, res) => {
   const { username, password } = req.body;
+  const isLoggedIn = req.headers?.authorization;
 
   if (!username) {
     return res
       .status(400)
       .json({ errorMessage: "Please provide your username." });
   }
+  else login(res, username, password, isLoggedIn);
+});
 
-  User.findOne({ username }).then((user) => {
+
+
+router.post("/logout", (req, res) => {
+  if (!req.headers?.authorization) {
+    return res.status(403).json({ errorMessage: "You are not logged in" });
+  }
+  else Session.findByIdAndDelete(req.headers.authorization).then(session => {
+    if (!session) return res.status(400).json({ errorMessage: "Invalid session." });
+    else return res.status(200).json(session);
+  })
+  .catch(error => res.status(500).json({ errorMessage: "Logout failed.", error: error }));
+});
+
+
+function login(res, username, password, oldSession, newUser) {
+  User.findOne({ username: username }).then((user) => {
     if (!user) {
       return res
         .status(400)
         .json({ errorMessage: "Username not recognized." });
     }
 
-    bcrypt.compare(password, user.password)
+    bcrypt.compare(password, user.passhash)
     .then((isSamePassword) => {
       if (!isSamePassword) {
         return res
           .status(400)
-          .render("auth/login", { errorMessage: "Incorrect password." });
+          .json({ errorMessage: "Incorrect password." });
       }
+      else if (oldSession) return logoutThenTryLogin(oldSession, user._id);
       else return Session.create({user: user._id, expires: Date.now() + SESSION_EXPIRATION});
     })
     .then(session => {
-      //TODO: send back something in addition to session?
-      return res.status(201).json(session); 
+      console.log("Session created:", session);
+      const data = { session: session };
+      if (newUser) data.user = newUser;
+      return res.status(201).json(data); 
     })
-    .catch(error => res.status(500).json({ errorMessage: error.message }));
+    .catch(error => {
+      console.log(error);
+      return res.status(500).json({ errorMessage: "Login failed", error: error });
+    });
   });
-});
+}
 
 
-
-router.post("/logout", (req, res) => {
-  //TODO: determine a method to receive inbound session id
-  const { id: session_id } = req.body;
-
-  if (!session_id) {
-    return res.status(400).json({ errorMessage: "Please provide a session id." });
-  }
-  else Session.findByIdAndDelete(session_id).then(session => {
-    if (!session) return res.status(400).json({ errorMessage: "Invalid session id." });
-    else return res.status(200).json(session);
-  })
-  .catch(error => res.status(500).json({ errorMessage: "Logout failed." }));
-});
+async function logoutThenTryLogin(oldSession, userId) {
+  return await Session.findByIdAndDelete(oldSession)
+        .then(_ => Session.create({user: userId, expires: Date.now() + SESSION_EXPIRATION}))
+        .catch(error => res.status(500).json({ errorMessage: "Logout failed. Login aborted.", error: error }));
+}
 
 
 module.exports = router;
