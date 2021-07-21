@@ -14,7 +14,6 @@ const User = require("../models/User.model");
 
 router.post("/signup", async (req, res) => {
   const { username, password, isAdmin } = req.body;
-  const isLoggedIn = req.headers?.authorization;
   
   if (!username) {
     return res
@@ -47,8 +46,8 @@ router.post("/signup", async (req, res) => {
         });
       })
       .then((user) => {
-        console.log("User created:", user);
-        login(res, username, password, isLoggedIn, user);
+        // console.log("User created:", user);
+        login(res, user);
       })
       .catch((error) => {
         if (error instanceof mongoose.Error.ValidationError) {
@@ -71,16 +70,33 @@ router.post("/signup", async (req, res) => {
 
 
 
-router.post("/login", async (req, res) => {
+router.post("/login", (req, res) => {
   const { username, password } = req.body;
-  const isLoggedIn = req.headers?.authorization;
 
   if (!username) {
     return res
       .status(400)
       .json({ errorMessage: "Please provide your username." });
   }
-  else login(res, username, password, isLoggedIn);
+  else {
+    User.findOne({ username: username }).then((user) => {
+      if (!user) {
+        return res
+          .status(400)
+          .json({ errorMessage: "Username not recognized." });
+      }
+    
+      bcrypt.compare(password, user.passhash)
+      .then((isSamePassword) => {
+        if (!isSamePassword) {
+          return res
+            .status(400)
+            .json({ errorMessage: "Incorrect password." });
+        }
+        else login(res, user);
+      })
+    });
+  }
 });
 
 
@@ -89,50 +105,24 @@ router.post("/logout", (req, res) => {
   if (!req.headers?.authorization) {
     return res.status(403).json({ errorMessage: "You are not logged in" });
   }
-  else Session.findByIdAndDelete(req.headers.authorization).then(session => {
-    if (!session) return res.status(400).json({ errorMessage: "Invalid session." });
-    else return res.status(200).json(session);
+  else Session.findByIdAndDelete(req.headers.authorization).then(_ => {
+    return res.status(200).json({ message: "You have successfully logged out"});
   })
   .catch(error => res.status(500).json({ errorMessage: "Logout failed.", error: error }));
 });
 
 
-function login(res, username, password, oldSession, newUser) {
-  User.findOne({ username: username }).then((user) => {
-    if (!user) {
-      return res
-        .status(400)
-        .json({ errorMessage: "Username not recognized." });
-    }
 
-    bcrypt.compare(password, user.passhash)
-    .then((isSamePassword) => {
-      if (!isSamePassword) {
-        return res
-          .status(400)
-          .json({ errorMessage: "Incorrect password." });
-      }
-      else if (oldSession) return logoutThenTryLogin(oldSession, user._id);
-      else return Session.create({user: user._id, expires: Date.now() + SESSION_EXPIRATION});
-    })
-    .then(session => {
-      console.log("Session created:", session);
-      const data = { session: session };
-      if (newUser) data.user = newUser;
-      return res.status(201).json(data); 
-    })
-    .catch(error => {
-      console.log(error);
-      return res.status(500).json({ errorMessage: "Login failed", error: error });
-    });
+function login(res, user) {
+  Session.create({user: user._id, expires: Date.now() + SESSION_EXPIRATION})
+  .then(session => {
+    // console.log("Session created:", session);
+    return res.status(201).json({session: session, user: user}); 
+  })
+  .catch(error => {
+    console.log(error);
+    return res.status(500).json({ errorMessage: "Login failed", error: error });
   });
-}
-
-
-async function logoutThenTryLogin(oldSession, userId) {
-  return await Session.findByIdAndDelete(oldSession)
-        .then(_ => Session.create({user: userId, expires: Date.now() + SESSION_EXPIRATION}))
-        .catch(error => res.status(500).json({ errorMessage: "Logout failed. Login aborted.", error: error }));
 }
 
 
