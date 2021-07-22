@@ -103,7 +103,7 @@ router.post("/login", (req, res) => {
 
 router.post("/logout", (req, res) => {
   if (!req.headers?.authorization) {
-    return res.status(403).json({ errorMessage: "You are not logged in" });
+    return res.status(403).json({ errorMessage: "You are not logged in." });
   }
   else Session.findByIdAndDelete(req.headers.authorization).then(_ => {
     return res.status(200).json({ message: "You have successfully logged out"});
@@ -114,7 +114,10 @@ router.post("/logout", (req, res) => {
 
 
 function login(res, user) {
-  Session.create({user: user._id, expires: Date.now() + SESSION_EXPIRATION})
+  if (req.headers?.authorization) {
+    return res.status(403).json({ errorMessage: "You are already logged in."})
+  }
+  else Session.create({user: user._id, expires: Date.now() + SESSION_EXPIRATION})
   .then(session => {
     // console.log("Session created:", session);
     return res.status(201).json({session: session, user: user}); 
