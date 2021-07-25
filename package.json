@@ -18,6 +18,8 @@
     "morgan": "^1.10.0"
   },
   "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-preset-env": "^1.7.0",
     "jest": "^27.0.6",
     "superagent": "^6.1.0",
     "supertest": "^6.1.4"
