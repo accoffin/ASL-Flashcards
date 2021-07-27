@@ -66,6 +66,7 @@ router.post("/decks/:deckId/remove/:cardName", (req, res, next) => {
   Deck.findById(req.params.deckId)
     .populate("flashcards")
     .then((deck) => {
+      console.log(req.params.cardName);
       const newCards = deck.flashcards
         .filter((card) => card.name !== req.params.cardName)
         .map((card) => card._id);
