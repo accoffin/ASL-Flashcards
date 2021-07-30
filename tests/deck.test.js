@@ -9,7 +9,9 @@ const app = require("../app");
 describe("Test deck creation", () => {
   test("POST /deck/create responds with deck title", () => {});
 
-  test("Error for ...", () => {});
+  test("Error for missing title", () => {});
+
+  test("Error for invalid title", () => {});
 });
 
 describe("Test individual deck retrieval", () => {
@@ -21,7 +23,9 @@ describe("Test individual deck retrieval", () => {
 describe("Test deck updating", () => {
   test("POST /deck/:id/update responds with success", () => {});
 
-  test("Error for ...", () => {});
+  test("Error for missing title", () => {});
+
+  test("Error for invalid title", () => {});
 });
 
 describe("Test deck deletion", () => {
