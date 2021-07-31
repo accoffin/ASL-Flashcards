@@ -3,6 +3,15 @@ const app = require("../app");
 
 describe("Test the signup route", () => {
   test("POST /auth/signup responds with user data and session", () => {
+    const TEST_USER = "TESTABOB";
+    const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
+    const TEST_ADMIN = false;
+    return request(app)
+      .post("/auth/signup")
+      .send({ username:TEST_USER, password:TEST_PASSWORD, isAdmin:TEST_ADMIN })
+      .then(response => {
+        expect(response.statusCode).toBe(201);
+      });
   });
 
   test("Error for missing username", () => {
