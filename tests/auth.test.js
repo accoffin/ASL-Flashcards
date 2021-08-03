@@ -8,8 +8,8 @@ describe("Test the signup route", () => {
   const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
   const TEST_ADMIN = false;
 
-  afterAll((done) => {
-    User.findOneAndDelete({ username: `${TEST_USER}` }).exec();
+  afterAll( (done) => {
+    User.findOneAndDelete({ username: `${TEST_USER}` }).exec(done);
   });
 
   test("POST /auth/signup responds with user data and session", () => {
@@ -21,7 +21,7 @@ describe("Test the signup route", () => {
         isAdmin: TEST_ADMIN,
       })
       .then((response) => {
-        // console.log(response);
+        console.log(response.body);
         expect(response.statusCode).toBe(201);
       });
   });
@@ -47,7 +47,6 @@ describe("Test the signup route", () => {
         isAdmin: TEST_ADMIN,
       })
       .then((response) => {
-        console.log(response);
         expect(response.statusCode).toBe(400);
       });
   });
