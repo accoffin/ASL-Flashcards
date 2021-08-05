@@ -7,6 +7,10 @@ module.exports = {
         "Password needs to have at least 8 chars and must contain at least one number, one lowercase and one uppercase letter.",
     },
   },
-  LOGIN: {},
+  LOGIN: {
+    MISSING_USERNAME: { errorMessage: "Please provide your username." },
+    USER_NOT_FOUND: { errorMessage: "Username not recognized." },
+    INCORRECT_PASSWORD: { errorMessage: "Incorrect password." },
+  },
   LOGOUT: {},
 };

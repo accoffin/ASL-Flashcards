@@ -58,18 +58,18 @@ router.post("/login", (req, res) => {
   if (!username) {
     return res
       .status(400)
-      .json({ errorMessage: "Please provide your username." });
+      .json(ERRORS.LOGIN.MISSING_USERNAME);
   } else {
     User.findOne({ username: username }).then((user) => {
       if (!user) {
         return res
           .status(400)
-          .json({ errorMessage: "Username not recognized." });
+          .json(ERRORS.LOGIN.USER_NOT_FOUND);
       }
 
       bcrypt.compare(password, user.passhash).then((isSamePassword) => {
         if (!isSamePassword) {
-          return res.status(400).json({ errorMessage: "Incorrect password." });
+          return res.status(400).json(ERRORS.LOGIN.INCORRECT_PASSWORD);
         } else login(res, user);
       });
     });
@@ -92,17 +92,32 @@ router.post("/logout", (req, res) => {
 });
 
 function login(res, user) {
-  Session.create({ user: user._id, expires: Date.now() + SESSION_EXPIRATION })
-    .then((session) => {
-      // console.log("Session created:", session);
-      return res.status(201).json({ session: session, user: user });
-    })
-    .catch((error) => {
-      console.log(error);
-      return res
-        .status(500)
-        .json({ errorMessage: "Login failed", error: error });
-    });
+  Session.findOne({user: user._id}).then(session => {
+    if(!session) {
+      Session.create({ user: user._id, expires: Date.now() + SESSION_EXPIRATION })
+        .then((newSession) => {
+          // console.log("Session created:", newSession);
+          return res.status(201).json({ session: newSession, user: user });
+        })
+        .catch((error) => {
+          console.log(error);
+          return res
+            .status(500)
+            .json({ errorMessage: "Login failed", error: error });
+        });
+    } else {
+      session.expires = Date.now() + SESSION_EXPIRATION;
+      session.save()
+        .then(_ => res.status(201).json({ session: session, user: user }))
+        .catch((error) => {
+          console.log(error);
+          return res
+            .status(500)
+            .json({ errorMessage: "Login failed", error: error });
+        });
+    }
+  });
+
 }
 
 module.exports = router;

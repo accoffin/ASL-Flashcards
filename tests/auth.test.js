@@ -28,7 +28,7 @@ describe("Test the signup route", () => {
         const { user, session } = response.body;
         console.log(response.body);
         expect(response.statusCode).toBe(201);
-        expect(user._id).toBe(session.user);
+        expect(session.user).toBe(user._id);
       });
   });
 
@@ -95,17 +95,84 @@ describe("Test the signup route", () => {
   });
 });
 
-// describe("Test the login route", () => {
-//   test("POST /auth/login responds with User and Session", () => {});
 
-//   test("Error for missing username", () => {});
+describe("Test the login route", () => {
+  const TEST_USER = "TESTABOB";
+  const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
+  const TEST_ADMIN = false;
 
-//   test("Error for unregistered username", () => {});
+  beforeAll(() => {
+    return request(app)
+      .post("/auth/signup")
+      .send({
+        username: TEST_USER,
+        password: TEST_PASSWORD,
+        isAdmin: TEST_ADMIN,
+      })
+      .then((response) => {
+        console.log(`Created Test User: ${response.body.user.username}`);
+      })
+      .catch((error) => {
+        console.log("Error creating test user: ", error);
+      });
+  });
 
-//   test("Error for incorrect password", () => {});
+  afterAll((done) => {
+    User.findOneAndDelete({ username: `${TEST_USER}` }).then((user) => {
+      Session.findOneAndDelete({ user: user._id }).exec(done);
+    });
+  });
 
-//   test("Error when header already has authorization", () => {});
-// });
+  test("POST /auth/login responds with User and Session", async () => {
+    const response = await request(app).post("/auth/login").send({
+      username: TEST_USER,
+      password: TEST_PASSWORD,
+    });
+    const { session: firstSession, user: firstUser } = response.body;
+    expect(response.statusCode).toBe(201);
+    expect(firstSession.user).toBe(firstUser._id);
+
+    const didSessionRecycleResponse = await request(app).post("/auth/login").send({
+      username: TEST_USER,
+      password: TEST_PASSWORD,
+    });
+    const { session: secondSession } = didSessionRecycleResponse.body;
+    expect(secondSession._id).toBe(firstSession._id);
+  });
+
+  test("Error for missing username", () => {
+    return request(app)
+      .post("/auth/login")
+      .send({
+        password: TEST_PASSWORD,
+      })
+      .then((response) => {
+        expect(response.body.errorMessage).toBe(ERRORS.LOGIN.MISSING_USERNAME.errorMessage);
+      })
+  });
+
+  test("Error for unregistered username", () => {
+    return request(app)
+      .post("/auth/login")
+      .send({
+        username: "asdfbuipwqeiorn;alihasdofijwqeior23ruipasdfjbheiorqwer;",
+        password: TEST_PASSWORD,
+      })
+      .then((response) => {
+        expect(response.body.errorMessage).toBe(ERRORS.LOGIN.USER_NOT_FOUND.errorMessage);
+      })});
+
+  test("Error for incorrect password", () => {
+    return request(app)
+      .post("/auth/login")
+      .send({
+        username: TEST_USER,
+        password: "bad",
+      })
+      .then((response) => {
+        expect(response.body.errorMessage).toBe(ERRORS.LOGIN.INCORRECT_PASSWORD.errorMessage);
+      })});
+});
 
 // describe("Test the logout route", () => {
 //   test("POST /auth/logout responds with success", () => {});
