@@ -2,14 +2,18 @@ const request = require("supertest");
 const app = require("../app");
 
 const User = require("../models/User.model");
+const Session = require("../models/Session.model");
+const ERRORS = require("../errors/auth.errors");
 
 describe("Test the signup route", () => {
   const TEST_USER = "TESTABOB";
   const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
   const TEST_ADMIN = false;
 
-  afterAll( (done) => {
-    User.findOneAndDelete({ username: `${TEST_USER}` }).exec(done);
+  afterAll((done) => {
+    User.findOneAndDelete({ username: `${TEST_USER}` }).then((user) => {
+      Session.findOneAndDelete({ user: user._id }).exec(done);
+    });
   });
 
   test("POST /auth/signup responds with user data and session", () => {
@@ -21,8 +25,10 @@ describe("Test the signup route", () => {
         isAdmin: TEST_ADMIN,
       })
       .then((response) => {
+        const { user, session } = response.body;
         console.log(response.body);
         expect(response.statusCode).toBe(201);
+        expect(user._id).toBe(session.user);
       });
   });
 
@@ -35,6 +41,9 @@ describe("Test the signup route", () => {
       })
       .then((response) => {
         expect(response.statusCode).toBe(400);
+        expect(response.body.errorMessage).toBe(
+          ERRORS.SIGNUP.MISSING_USERNAME.errorMessage
+        );
       });
   });
 
@@ -48,6 +57,9 @@ describe("Test the signup route", () => {
       })
       .then((response) => {
         expect(response.statusCode).toBe(400);
+        expect(response.body.errorMessage).toBe(
+          ERRORS.SIGNUP.ALREADY_REGISTERED.errorMessage
+        );
       });
   });
 
@@ -60,6 +72,9 @@ describe("Test the signup route", () => {
       })
       .then((response) => {
         expect(response.statusCode).toBe(400);
+        expect(response.body.errorMessage).toBe(
+          ERRORS.SIGNUP.INVALID_PASSWORD.errorMessage
+        );
       });
   });
 
@@ -73,20 +88,9 @@ describe("Test the signup route", () => {
       })
       .then((response) => {
         expect(response.statusCode).toBe(400);
-      });
-  });
-
-  test("Error when header already has authorization", () => {
-    return request(app)
-      .post("/auth/signup")
-      .set("authorization", "foobar")
-      .send({
-        username: TEST_USER,
-        password: TEST_PASSWORD,
-        isAdmin: TEST_ADMIN,
-      })
-      .then((response) => {
-        expect(response.statusCode).toBe(403);
+        expect(response.body.errorMessage).toBe(
+          ERRORS.SIGNUP.INVALID_PASSWORD.errorMessage
+        );
       });
   });
 });
