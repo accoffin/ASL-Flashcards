@@ -9,6 +9,8 @@ const Session = require("../models/Session.model");
 const SESSION_EXPIRATION = 1000 * 60 * 30; //Sessions live for 30 minutes
 
 const User = require("../models/User.model");
+const Deck = require("../models/Deck.model");
+const Flashcard = require("../models/Flashcard.model");
 
 const ERRORS = require("../errors/auth.errors");
 
@@ -31,15 +33,28 @@ router.post("/signup", async (req, res) => {
       return bcrypt
         .genSalt(saltRounds)
         .then((salt) => bcrypt.hash(password, salt))
-        .then((hashedPassword) => {
+        .then((hashedPassword) =>
+          Deck.create({ name: "First Deck!" }).then((deck) => {
+            return { deck, hashedPassword };
+          })
+        )
+        .then((deckAndHash) => {
+          const { deck, hashedPassword } = deckAndHash;
           return User.create({
             username,
             passhash: hashedPassword,
             isAdmin,
+            decks: [deck._id],
+            currentDeck: deck._id,
+          }).then((user) => {
+            return { deck, user };
           });
         })
-        .then((user) => {
+        .then((deckAndUser) => {
           // console.log("User created:", user);
+          const { deck, user } = deckAndUser;
+          deck.cards = [];
+          user.currentDeck = deck;
           login(res, user);
         })
         .catch((error) => {
@@ -58,17 +73,24 @@ router.post("/login", (req, res) => {
   if (!username) {
     return res.status(400).json(ERRORS.LOGIN.MISSING_USERNAME);
   } else {
-    User.findOne({ username: username }).then((user) => {
-      if (!user) {
-        return res.status(400).json(ERRORS.LOGIN.USER_NOT_FOUND);
-      }
+    User.findOne({ username: username })
+      .populate({
+        path: "currentDeck",
+        populate: {
+          path: "cards",
+        },
+      })
+      .then((user) => {
+        if (!user) {
+          return res.status(400).json(ERRORS.LOGIN.USER_NOT_FOUND);
+        }
 
-      bcrypt.compare(password, user.passhash).then((isSamePassword) => {
-        if (!isSamePassword) {
-          return res.status(400).json(ERRORS.LOGIN.INCORRECT_PASSWORD);
-        } else login(res, user);
+        bcrypt.compare(password, user.passhash).then((isSamePassword) => {
+          if (!isSamePassword) {
+            return res.status(400).json(ERRORS.LOGIN.INCORRECT_PASSWORD);
+          } else login(res, user);
+        });
       });
-    });
   }
 });
 

@@ -3,6 +3,7 @@ const app = require("../app");
 
 const User = require("../models/User.model");
 const Session = require("../models/Session.model");
+const Deck = require("../models/Deck.model");
 const ERRORS = require("../errors/auth.errors");
 
 describe("Test the signup route", () => {
@@ -12,7 +13,11 @@ describe("Test the signup route", () => {
 
   afterAll((done) => {
     User.findOneAndDelete({ username: `${TEST_USER}` }).then((user) => {
-      Session.findOneAndDelete({ user: user._id }).exec(done);
+      const deckDelete = Deck.findByIdAndDelete(user.decks[0]).exec();
+      const sessionDelete = Session.findOneAndDelete({ user: user._id }).exec();
+      Promise.all([deckDelete, sessionDelete]).finally(() => {
+        done();
+      });
     });
   });
 
@@ -29,6 +34,10 @@ describe("Test the signup route", () => {
         console.log(response.body);
         expect(response.statusCode).toBe(201);
         expect(session.user).toBe(user._id);
+
+        expect(user.currentDeck?.name).toBeDefined();
+        expect(user.currentDeck?.cards).toBeDefined();
+        expect(user.currentMode).toBeDefined();
       });
   });
 
@@ -118,7 +127,11 @@ describe("Test the login route", () => {
 
   afterAll((done) => {
     User.findOneAndDelete({ username: `${TEST_USER}` }).then((user) => {
-      Session.findOneAndDelete({ user: user._id }).exec(done);
+      const deckDelete = Deck.findByIdAndDelete(user.decks[0]).exec();
+      const sessionDelete = Session.findOneAndDelete({ user: user._id }).exec();
+      Promise.all([deckDelete, sessionDelete]).finally(() => {
+        done();
+      });
     });
   });
 
@@ -130,6 +143,10 @@ describe("Test the login route", () => {
     const { session: firstSession, user: firstUser } = response.body;
     expect(response.statusCode).toBe(201);
     expect(firstSession.user).toBe(firstUser._id);
+
+    expect(firstUser.currentDeck?.name).toBeDefined();
+    expect(firstUser.currentDeck?.cards).toBeDefined();
+    expect(firstUser.currentMode).toBeDefined();
 
     const didSessionRecycleResponse = await request(app)
       .post("/auth/login")
@@ -208,7 +225,11 @@ describe("Test the logout route", () => {
 
   afterAll((done) => {
     User.findOneAndDelete({ username: `${TEST_USER}` }).then((user) => {
-      Session.findOneAndDelete({ user: user._id }).exec(done);
+      const deckDelete = Deck.findByIdAndDelete(user.currentDeck).exec();
+      const sessionDelete = Session.findOneAndDelete({ user: user._id }).exec();
+      Promise.all([deckDelete, sessionDelete]).finally(() => {
+        done();
+      });
     });
   });
 

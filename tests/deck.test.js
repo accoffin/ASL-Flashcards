@@ -1,5 +1,6 @@
-// const request = require("supertest");
-// const app = require("../app");
+const request = require("supertest");
+const app = require("../app");
+const ERRORS = require("../errors/deck.errors");
 
 // ok, so... the current deck is pulled in initially as part of the user data
 // from login. But we need additional decks to be rendered if the user has
@@ -7,8 +8,7 @@
 // has populated card data
 
 describe("Test deck creation", () => {
-  test("POST /deck/create responds with deck title", () => {
-  });
+  test("POST /deck/create responds with deck title", () => {});
 
   // test("Error for missing title", () => {});
 
