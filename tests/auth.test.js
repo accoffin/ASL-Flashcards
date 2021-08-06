@@ -95,7 +95,6 @@ describe("Test the signup route", () => {
   });
 });
 
-
 describe("Test the login route", () => {
   const TEST_USER = "TESTABOB";
   const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
@@ -110,7 +109,7 @@ describe("Test the login route", () => {
         isAdmin: TEST_ADMIN,
       })
       .then((response) => {
-        console.log(`Created Test User: ${response.body.user.username}`);
+        // console.log(`Created Test User: ${response.body.user.username}`);
       })
       .catch((error) => {
         console.log("Error creating test user: ", error);
@@ -132,10 +131,12 @@ describe("Test the login route", () => {
     expect(response.statusCode).toBe(201);
     expect(firstSession.user).toBe(firstUser._id);
 
-    const didSessionRecycleResponse = await request(app).post("/auth/login").send({
-      username: TEST_USER,
-      password: TEST_PASSWORD,
-    });
+    const didSessionRecycleResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        username: TEST_USER,
+        password: TEST_PASSWORD,
+      });
     const { session: secondSession } = didSessionRecycleResponse.body;
     expect(secondSession._id).toBe(firstSession._id);
   });
@@ -147,8 +148,10 @@ describe("Test the login route", () => {
         password: TEST_PASSWORD,
       })
       .then((response) => {
-        expect(response.body.errorMessage).toBe(ERRORS.LOGIN.MISSING_USERNAME.errorMessage);
-      })
+        expect(response.body.errorMessage).toBe(
+          ERRORS.LOGIN.MISSING_USERNAME.errorMessage
+        );
+      });
   });
 
   test("Error for unregistered username", () => {
@@ -159,8 +162,11 @@ describe("Test the login route", () => {
         password: TEST_PASSWORD,
       })
       .then((response) => {
-        expect(response.body.errorMessage).toBe(ERRORS.LOGIN.USER_NOT_FOUND.errorMessage);
-      })});
+        expect(response.body.errorMessage).toBe(
+          ERRORS.LOGIN.USER_NOT_FOUND.errorMessage
+        );
+      });
+  });
 
   test("Error for incorrect password", () => {
     return request(app)
@@ -170,12 +176,59 @@ describe("Test the login route", () => {
         password: "bad",
       })
       .then((response) => {
-        expect(response.body.errorMessage).toBe(ERRORS.LOGIN.INCORRECT_PASSWORD.errorMessage);
-      })});
+        expect(response.body.errorMessage).toBe(
+          ERRORS.LOGIN.INCORRECT_PASSWORD.errorMessage
+        );
+      });
+  });
 });
 
-// describe("Test the logout route", () => {
-//   test("POST /auth/logout responds with success", () => {});
+describe("Test the logout route", () => {
+  const TEST_USER = "TESTABOB";
+  const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
+  const TEST_ADMIN = false;
 
-//   test("Error when header has no authorization", () => {});
-// });
+  let TEST_SESSION = null;
+
+  beforeAll(() => {
+    return request(app)
+      .post("/auth/signup")
+      .send({
+        username: TEST_USER,
+        password: TEST_PASSWORD,
+        isAdmin: TEST_ADMIN,
+      })
+      .then((response) => {
+        TEST_SESSION = response.body.session;
+      })
+      .catch((error) => {
+        console.log("Error creating test user: ", error);
+      });
+  });
+
+  afterAll((done) => {
+    User.findOneAndDelete({ username: `${TEST_USER}` }).then((user) => {
+      Session.findOneAndDelete({ user: user._id }).exec(done);
+    });
+  });
+
+  test("POST /auth/logout responds with success", () => {
+    return request(app)
+      .post("/auth/logout")
+      .set("authorization", `${TEST_SESSION._id}`)
+      .then((response) => {
+        expect(response.statusCode).toBe(200);
+      });
+  });
+
+  test("Error when header has no authorization", () => {
+    return request(app)
+      .post("/auth/logout")
+      .then((response) => {
+        expect(response.statusCode).toBe(403);
+        expect(response.body.errorMessage).toBe(
+          ERRORS.LOGOUT.NOT_LOGGED_IN.errorMessage
+        );
+      });
+  });
+});

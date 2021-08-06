@@ -56,15 +56,11 @@ router.post("/login", (req, res) => {
   const { username, password } = req.body;
 
   if (!username) {
-    return res
-      .status(400)
-      .json(ERRORS.LOGIN.MISSING_USERNAME);
+    return res.status(400).json(ERRORS.LOGIN.MISSING_USERNAME);
   } else {
     User.findOne({ username: username }).then((user) => {
       if (!user) {
-        return res
-          .status(400)
-          .json(ERRORS.LOGIN.USER_NOT_FOUND);
+        return res.status(400).json(ERRORS.LOGIN.USER_NOT_FOUND);
       }
 
       bcrypt.compare(password, user.passhash).then((isSamePassword) => {
@@ -78,7 +74,7 @@ router.post("/login", (req, res) => {
 
 router.post("/logout", (req, res) => {
   if (!req.headers?.authorization) {
-    return res.status(403).json({ errorMessage: "You are not logged in." });
+    return res.status(403).json(ERRORS.LOGOUT.NOT_LOGGED_IN);
   } else
     Session.findByIdAndDelete(req.headers.authorization)
       .then((_) => {
@@ -92,9 +88,12 @@ router.post("/logout", (req, res) => {
 });
 
 function login(res, user) {
-  Session.findOne({user: user._id}).then(session => {
-    if(!session) {
-      Session.create({ user: user._id, expires: Date.now() + SESSION_EXPIRATION })
+  Session.findOne({ user: user._id }).then((session) => {
+    if (!session) {
+      Session.create({
+        user: user._id,
+        expires: Date.now() + SESSION_EXPIRATION,
+      })
         .then((newSession) => {
           // console.log("Session created:", newSession);
           return res.status(201).json({ session: newSession, user: user });
@@ -107,8 +106,9 @@ function login(res, user) {
         });
     } else {
       session.expires = Date.now() + SESSION_EXPIRATION;
-      session.save()
-        .then(_ => res.status(201).json({ session: session, user: user }))
+      session
+        .save()
+        .then(() => res.status(201).json({ session: session, user: user }))
         .catch((error) => {
           console.log(error);
           return res
@@ -117,7 +117,6 @@ function login(res, user) {
         });
     }
   });
-
 }
 
 module.exports = router;

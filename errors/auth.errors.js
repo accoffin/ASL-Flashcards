@@ -12,5 +12,7 @@ module.exports = {
     USER_NOT_FOUND: { errorMessage: "Username not recognized." },
     INCORRECT_PASSWORD: { errorMessage: "Incorrect password." },
   },
-  LOGOUT: {},
+  LOGOUT: {
+    NOT_LOGGED_IN: { errorMessage: "You are not logged in." },
+  },
 };
