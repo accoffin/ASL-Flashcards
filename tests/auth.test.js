@@ -35,9 +35,9 @@ describe("Test the signup route", () => {
         expect(response.statusCode).toBe(201);
         expect(session.user).toBe(user._id);
 
-        expect(user.currentDeck?.name).toBeDefined();
-        expect(user.currentDeck?.cards).toBeDefined();
-        expect(user.currentMode).toBeDefined();
+        expect(user.currentDeck?.name).toBe("First Deck!");
+        expect(user.currentDeck?.cards).toStrictEqual([]);
+        expect(user.currentMode).toBe("receptive");
       });
   });
 
