@@ -4,6 +4,7 @@ const app = require("../app");
 const User = require("../models/User.model");
 const Session = require("../models/Session.model");
 const Deck = require("../models/Deck.model");
+const Flashcard = require("../models/Flashcard.model");
 const ERRORS = require("../errors/auth.errors");
 
 describe("Test the signup route", () => {
@@ -105,9 +106,15 @@ describe("Test the signup route", () => {
 });
 
 describe("Test the login route", () => {
-  const TEST_USER = "TESTABOB";
+  const TEST_USER =  "TESTABOB";
   const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
   const TEST_ADMIN = false;
+
+  const TEST_CARD = {
+    gloss: "TEST",
+    gif: "No URL for gif",
+    category: "common phrases",
+  };
 
   beforeAll(() => {
     return request(app)
@@ -118,7 +125,14 @@ describe("Test the login route", () => {
         isAdmin: TEST_ADMIN,
       })
       .then((response) => {
-        // console.log(`Created Test User: ${response.body.user.username}`);
+        return Flashcard.create(TEST_CARD).then(card => { return {
+          deck: response.body.user.currentDeck,
+          card
+        };});
+      })
+      .then(deckandCard => {
+        const {deck, card} = deckandCard;
+        return Deck.findByIdAndUpdate(deck._id, {cards: [card._id]})
       })
       .catch((error) => {
         console.log("Error creating test user: ", error);
@@ -127,7 +141,9 @@ describe("Test the login route", () => {
 
   afterAll((done) => {
     User.findOneAndDelete({ username: `${TEST_USER}` }).then((user) => {
-      const deckDelete = Deck.findByIdAndDelete(user.decks[0]).exec();
+      const deckDelete = Deck.findByIdAndDelete(user.decks[0]).then(deck => {
+        Flashcard.findByIdAndDelete(deck.cards[0]).exec();
+      });
       const sessionDelete = Session.findOneAndDelete({ user: user._id }).exec();
       Promise.all([deckDelete, sessionDelete]).finally(() => {
         done();
@@ -143,10 +159,14 @@ describe("Test the login route", () => {
     const { session: firstSession, user: firstUser } = response.body;
     expect(response.statusCode).toBe(201);
     expect(firstSession.user).toBe(firstUser._id);
-
-    expect(firstUser.currentDeck?.name).toBeDefined();
-    expect(firstUser.currentDeck?.cards).toBeDefined();
     expect(firstUser.currentMode).toBeDefined();
+    const deck = firstUser.currentDeck;
+    expect(deck?.name).toBeDefined();
+    expect(deck?.cards).toBeDefined();
+    const cardInDeck = deck.cards[0];
+    expect(cardInDeck.gloss).toBeDefined();
+    expect(cardInDeck.gif).toBeDefined();
+    expect(Object.keys(cardInDeck).length).toBe(3);
 
     const didSessionRecycleResponse = await request(app)
       .post("/auth/login")

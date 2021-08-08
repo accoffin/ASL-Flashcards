@@ -25,7 +25,7 @@ router.post("/signup", async (req, res) => {
   if (!password || !regex.test(password)) {
     return res.status(400).json(ERRORS.SIGNUP.INVALID_PASSWORD);
   }
-
+  console.log(username);
   User.findOne({ username }).then((found) => {
     if (found) {
       return res.status(400).json(ERRORS.SIGNUP.ALREADY_REGISTERED);
@@ -40,6 +40,7 @@ router.post("/signup", async (req, res) => {
         )
         .then((deckAndHash) => {
           const { deck, hashedPassword } = deckAndHash;
+          console.log("made it!")
           return User.create({
             username,
             passhash: hashedPassword,
@@ -61,7 +62,7 @@ router.post("/signup", async (req, res) => {
           if (error instanceof mongoose.Error.ValidationError) {
             return res.status(400).json({ errorMessage: error.message });
           } else if (error.code === 11000) {
-            return res.status(400).json(ERRORS.SIGNUP.ALREADY_REGISTERED);
+            return res.status(400).json({ errorMessage: "Dunno what the problem is..."});//ERRORS.SIGNUP.ALREADY_REGISTERED);
           } else return res.status(500).json({ errorMessage: error.message });
         });
   });
@@ -78,6 +79,7 @@ router.post("/login", (req, res) => {
         path: "currentDeck",
         populate: {
           path: "cards",
+          select: "gloss gif",
         },
       })
       .then((user) => {
