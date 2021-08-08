@@ -1,15 +1,15 @@
 module.exports = {
   SIGNUP: {
-    MISSING_USERNAME: { errorMessage: "Please provide your username." },
-    ALREADY_REGISTERED: { errorMessage: "Username already taken." },
+    MISSING_EMAIL: { errorMessage: "Please provide your email address." },
+    ALREADY_REGISTERED: { errorMessage: "This email address is already registered." },
     INVALID_PASSWORD: {
       errorMessage:
         "Password needs to have at least 8 chars and must contain at least one number, one lowercase and one uppercase letter.",
     },
   },
   LOGIN: {
-    MISSING_USERNAME: { errorMessage: "Please provide your username." },
-    USER_NOT_FOUND: { errorMessage: "Username not recognized." },
+    MISSING_EMAIL: { errorMessage: "Please provide your email address." },
+    EMAIL_NOT_FOUND: { errorMessage: "Email address not recognized." },
     INCORRECT_PASSWORD: { errorMessage: "Incorrect password." },
   },
   LOGOUT: {

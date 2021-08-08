@@ -15,18 +15,17 @@ const Flashcard = require("../models/Flashcard.model");
 const ERRORS = require("../errors/auth.errors");
 
 router.post("/signup", async (req, res) => {
-  const { username, password, isAdmin } = req.body;
+  const { email, password, isAdmin } = req.body;
 
-  if (!username) {
-    return res.status(400).json(ERRORS.SIGNUP.MISSING_USERNAME);
+  if (!email) {
+    return res.status(400).json(ERRORS.SIGNUP.MISSING_EMAIL);
   }
 
   const regex = /(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}/;
   if (!password || !regex.test(password)) {
     return res.status(400).json(ERRORS.SIGNUP.INVALID_PASSWORD);
   }
-  console.log(username);
-  User.findOne({ username }).then((found) => {
+  User.findOne({ email }).then((found) => {
     if (found) {
       return res.status(400).json(ERRORS.SIGNUP.ALREADY_REGISTERED);
     } else
@@ -40,9 +39,8 @@ router.post("/signup", async (req, res) => {
         )
         .then((deckAndHash) => {
           const { deck, hashedPassword } = deckAndHash;
-          console.log("made it!")
           return User.create({
-            username,
+            email,
             passhash: hashedPassword,
             isAdmin,
             decks: [deck._id],
@@ -62,19 +60,19 @@ router.post("/signup", async (req, res) => {
           if (error instanceof mongoose.Error.ValidationError) {
             return res.status(400).json({ errorMessage: error.message });
           } else if (error.code === 11000) {
-            return res.status(400).json({ errorMessage: "Dunno what the problem is..."});//ERRORS.SIGNUP.ALREADY_REGISTERED);
+            return res.status(400).json({ errorMessage: error.message});
           } else return res.status(500).json({ errorMessage: error.message });
         });
   });
 });
 
 router.post("/login", (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
 
-  if (!username) {
-    return res.status(400).json(ERRORS.LOGIN.MISSING_USERNAME);
+  if (!email) {
+    return res.status(400).json(ERRORS.LOGIN.MISSING_EMAIL);
   } else {
-    User.findOne({ username: username })
+    User.findOne({ email })
       .populate({
         path: "currentDeck",
         populate: {
@@ -84,7 +82,7 @@ router.post("/login", (req, res) => {
       })
       .then((user) => {
         if (!user) {
-          return res.status(400).json(ERRORS.LOGIN.USER_NOT_FOUND);
+          return res.status(400).json(ERRORS.LOGIN.EMAIL_NOT_FOUND);
         }
 
         bcrypt.compare(password, user.passhash).then((isSamePassword) => {

@@ -8,12 +8,12 @@ const Flashcard = require("../models/Flashcard.model");
 const ERRORS = require("../errors/auth.errors");
 
 describe("Test the signup route", () => {
-  const TEST_USER = "TESTABOB";
+  const TEST_EMAIL = "TESTABOB1";
   const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
   const TEST_ADMIN = false;
 
   afterAll((done) => {
-    User.findOneAndDelete({ username: `${TEST_USER}` }).then((user) => {
+    User.findOneAndDelete({ email: `${TEST_EMAIL}` }).then((user) => {
       const deckDelete = Deck.findByIdAndDelete(user.decks[0]).exec();
       const sessionDelete = Session.findOneAndDelete({ user: user._id }).exec();
       Promise.all([deckDelete, sessionDelete]).finally(() => {
@@ -26,7 +26,7 @@ describe("Test the signup route", () => {
     return request(app)
       .post("/auth/signup")
       .send({
-        username: TEST_USER,
+        email: TEST_EMAIL,
         password: TEST_PASSWORD,
         isAdmin: TEST_ADMIN,
       })
@@ -42,7 +42,7 @@ describe("Test the signup route", () => {
       });
   });
 
-  test("Error for missing username", () => {
+  test("Error for missing email", () => {
     return request(app)
       .post("/auth/signup")
       .send({
@@ -52,16 +52,16 @@ describe("Test the signup route", () => {
       .then((response) => {
         expect(response.statusCode).toBe(400);
         expect(response.body.errorMessage).toBe(
-          ERRORS.SIGNUP.MISSING_USERNAME.errorMessage
+          ERRORS.SIGNUP.MISSING_EMAIL.errorMessage
         );
       });
   });
 
-  test("Error for username already taken", () => {
+  test("Error for email already taken", () => {
     return request(app)
       .post("/auth/signup")
       .send({
-        username: TEST_USER,
+        email: TEST_EMAIL,
         password: TEST_PASSWORD,
         isAdmin: TEST_ADMIN,
       })
@@ -77,7 +77,7 @@ describe("Test the signup route", () => {
     return request(app)
       .post("/auth/signup")
       .send({
-        username: TEST_USER,
+        email: TEST_EMAIL,
         isAdmin: TEST_ADMIN,
       })
       .then((response) => {
@@ -92,7 +92,7 @@ describe("Test the signup route", () => {
     return request(app)
       .post("/auth/signup")
       .send({
-        username: TEST_USER,
+        email: TEST_EMAIL,
         password: "pwd",
         isAdmin: TEST_ADMIN,
       })
@@ -106,7 +106,7 @@ describe("Test the signup route", () => {
 });
 
 describe("Test the login route", () => {
-  const TEST_USER =  "TESTABOB";
+  const TEST_EMAIL =  "TESTABOB2";
   const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
   const TEST_ADMIN = false;
 
@@ -120,7 +120,7 @@ describe("Test the login route", () => {
     return request(app)
       .post("/auth/signup")
       .send({
-        username: TEST_USER,
+        email: TEST_EMAIL,
         password: TEST_PASSWORD,
         isAdmin: TEST_ADMIN,
       })
@@ -140,7 +140,7 @@ describe("Test the login route", () => {
   });
 
   afterAll((done) => {
-    User.findOneAndDelete({ username: `${TEST_USER}` }).then((user) => {
+    User.findOneAndDelete({ email: `${TEST_EMAIL}` }).then((user) => {
       const deckDelete = Deck.findByIdAndDelete(user.decks[0]).then(deck => {
         Flashcard.findByIdAndDelete(deck.cards[0]).exec();
       });
@@ -153,7 +153,7 @@ describe("Test the login route", () => {
 
   test("POST /auth/login responds with User and Session", async () => {
     const response = await request(app).post("/auth/login").send({
-      username: TEST_USER,
+      email: TEST_EMAIL,
       password: TEST_PASSWORD,
     });
     const { session: firstSession, user: firstUser } = response.body;
@@ -171,14 +171,14 @@ describe("Test the login route", () => {
     const didSessionRecycleResponse = await request(app)
       .post("/auth/login")
       .send({
-        username: TEST_USER,
+        email: TEST_EMAIL,
         password: TEST_PASSWORD,
       });
     const { session: secondSession } = didSessionRecycleResponse.body;
     expect(secondSession._id).toBe(firstSession._id);
   });
 
-  test("Error for missing username", () => {
+  test("Error for missing email", () => {
     return request(app)
       .post("/auth/login")
       .send({
@@ -186,21 +186,21 @@ describe("Test the login route", () => {
       })
       .then((response) => {
         expect(response.body.errorMessage).toBe(
-          ERRORS.LOGIN.MISSING_USERNAME.errorMessage
+          ERRORS.LOGIN.MISSING_EMAIL.errorMessage
         );
       });
   });
 
-  test("Error for unregistered username", () => {
+  test("Error for unregistered email", () => {
     return request(app)
       .post("/auth/login")
       .send({
-        username: "asdfbuipwqeiorn;alihasdofijwqeior23ruipasdfjbheiorqwer;",
+        email: "asdfbuipwqeiorn;alihasdofijwqeior23ruipasdfjbheiorqwer;",
         password: TEST_PASSWORD,
       })
       .then((response) => {
         expect(response.body.errorMessage).toBe(
-          ERRORS.LOGIN.USER_NOT_FOUND.errorMessage
+          ERRORS.LOGIN.EMAIL_NOT_FOUND.errorMessage
         );
       });
   });
@@ -209,7 +209,7 @@ describe("Test the login route", () => {
     return request(app)
       .post("/auth/login")
       .send({
-        username: TEST_USER,
+        email: TEST_EMAIL,
         password: "bad",
       })
       .then((response) => {
@@ -221,7 +221,7 @@ describe("Test the login route", () => {
 });
 
 describe("Test the logout route", () => {
-  const TEST_USER = "TESTABOB";
+  const TEST_EMAIL = "TESTABOB3";
   const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
   const TEST_ADMIN = false;
 
@@ -231,7 +231,7 @@ describe("Test the logout route", () => {
     return request(app)
       .post("/auth/signup")
       .send({
-        username: TEST_USER,
+        email: TEST_EMAIL,
         password: TEST_PASSWORD,
         isAdmin: TEST_ADMIN,
       })
@@ -244,7 +244,7 @@ describe("Test the logout route", () => {
   });
 
   afterAll((done) => {
-    User.findOneAndDelete({ username: `${TEST_USER}` }).then((user) => {
+    User.findOneAndDelete({ email: `${TEST_EMAIL}` }).then((user) => {
       const deckDelete = Deck.findByIdAndDelete(user.currentDeck).exec();
       const sessionDelete = Session.findOneAndDelete({ user: user._id }).exec();
       Promise.all([deckDelete, sessionDelete]).finally(() => {
