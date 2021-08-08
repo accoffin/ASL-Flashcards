@@ -9,124 +9,136 @@ const Session = require("../models/Session.model");
 const SESSION_EXPIRATION = 1000 * 60 * 30; //Sessions live for 30 minutes
 
 const User = require("../models/User.model");
+const Deck = require("../models/Deck.model");
+const Flashcard = require("../models/Flashcard.model");
 
-
+const ERRORS = require("../errors/auth.errors");
 
 router.post("/signup", async (req, res) => {
-  const { username, password, isAdmin } = req.body;
-  
-  if (!username) {
-    return res
-      .status(400)
-      .json({ errorMessage: "Please provide your username." });
+  const { email, password, isAdmin } = req.body;
+
+  if (!email) {
+    return res.status(400).json(ERRORS.SIGNUP.MISSING_EMAIL);
   }
-  
+
   const regex = /(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}/;
   if (!password || !regex.test(password)) {
-    return res.status(400).json({
-      errorMessage:
-        "Password needs to have at least 8 chars and must contain at least one number, one lowercase and one uppercase letter.",
-    });
+    return res.status(400).json(ERRORS.SIGNUP.INVALID_PASSWORD);
   }
-  
-  User.findOne({ username }).then((found) => {
+  User.findOne({ email }).then((found) => {
     if (found) {
-      return res
-        .status(400)
-        .json({ errorMessage: "Username already taken." });
-    }
-    else return bcrypt
-      .genSalt(saltRounds)
-      .then((salt) => bcrypt.hash(password, salt))
-      .then((hashedPassword) => {
-        return User.create({
-          username,
-          passhash: hashedPassword,
-          isAdmin,
-        });
-      })
-      .then((user) => {
-        // console.log("User created:", user);
-        login(res, user);
-      })
-      .catch((error) => {
-        if (error instanceof mongoose.Error.ValidationError) {
-          return res
-            .status(400)
-            .json({ errorMessage: error.message });
-        }
-        else if (error.code === 11000) {
-          return res.status(400).json({
-            errorMessage:
-              "Username needs to be unique. The username you chose is already in use.",
+      return res.status(400).json(ERRORS.SIGNUP.ALREADY_REGISTERED);
+    } else
+      return bcrypt
+        .genSalt(saltRounds)
+        .then((salt) => bcrypt.hash(password, salt))
+        .then((hashedPassword) =>
+          Deck.create({ name: "First Deck!" }).then((deck) => {
+            return { deck, hashedPassword };
+          })
+        )
+        .then((deckAndHash) => {
+          const { deck, hashedPassword } = deckAndHash;
+          return User.create({
+            email,
+            passhash: hashedPassword,
+            isAdmin,
+            decks: [deck._id],
+            currentDeck: deck._id,
+          }).then((user) => {
+            return { deck, user };
           });
-        }
-        else return res
-          .status(500)
-          .json({ errorMessage: error.message });
-      });
+        })
+        .then((deckAndUser) => {
+          // console.log("User created:", user);
+          const { deck, user } = deckAndUser;
+          deck.cards = [];
+          user.currentDeck = deck;
+          login(res, user);
+        })
+        .catch((error) => {
+          if (error instanceof mongoose.Error.ValidationError) {
+            return res.status(400).json({ errorMessage: error.message });
+          } else if (error.code === 11000) {
+            return res.status(400).json({ errorMessage: error.message});
+          } else return res.status(500).json({ errorMessage: error.message });
+        });
   });
 });
 
-
-
 router.post("/login", (req, res) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
 
-  if (!username) {
-    return res
-      .status(400)
-      .json({ errorMessage: "Please provide your username." });
-  }
-  else {
-    User.findOne({ username: username }).then((user) => {
-      if (!user) {
-        return res
-          .status(400)
-          .json({ errorMessage: "Username not recognized." });
-      }
-    
-      bcrypt.compare(password, user.passhash)
-      .then((isSamePassword) => {
-        if (!isSamePassword) {
-          return res
-            .status(400)
-            .json({ errorMessage: "Incorrect password." });
-        }
-        else login(res, user);
+  if (!email) {
+    return res.status(400).json(ERRORS.LOGIN.MISSING_EMAIL);
+  } else {
+    User.findOne({ email })
+      .populate({
+        path: "currentDeck",
+        populate: {
+          path: "cards",
+          select: "gloss gif",
+        },
       })
-    });
+      .then((user) => {
+        if (!user) {
+          return res.status(400).json(ERRORS.LOGIN.EMAIL_NOT_FOUND);
+        }
+
+        bcrypt.compare(password, user.passhash).then((isSamePassword) => {
+          if (!isSamePassword) {
+            return res.status(400).json(ERRORS.LOGIN.INCORRECT_PASSWORD);
+          } else login(res, user);
+        });
+      });
   }
 });
-
-
 
 router.post("/logout", (req, res) => {
   if (!req.headers?.authorization) {
-    return res.status(403).json({ errorMessage: "You are not logged in." });
-  }
-  else Session.findByIdAndDelete(req.headers.authorization).then(_ => {
-    return res.status(200).json({ message: "You have successfully logged out"});
-  })
-  .catch(error => res.status(500).json({ errorMessage: "Logout failed.", error: error }));
+    return res.status(403).json(ERRORS.LOGOUT.NOT_LOGGED_IN);
+  } else
+    Session.findByIdAndDelete(req.headers.authorization)
+      .then((_) => {
+        return res
+          .status(200)
+          .json({ message: "You have successfully logged out" });
+      })
+      .catch((error) =>
+        res.status(500).json({ errorMessage: "Logout failed.", error: error })
+      );
 });
 
-
-
 function login(res, user) {
-  if (req.headers?.authorization) {
-    return res.status(403).json({ errorMessage: "You are already logged in."})
-  }
-  else Session.create({user: user._id, expires: Date.now() + SESSION_EXPIRATION})
-  .then(session => {
-    // console.log("Session created:", session);
-    return res.status(201).json({session: session, user: user}); 
-  })
-  .catch(error => {
-    console.log(error);
-    return res.status(500).json({ errorMessage: "Login failed", error: error });
+  Session.findOne({ user: user._id }).then((session) => {
+    if (!session) {
+      Session.create({
+        user: user._id,
+        expires: Date.now() + SESSION_EXPIRATION,
+      })
+        .then((newSession) => {
+          // console.log("Session created:", newSession);
+          return res.status(201).json({ session: newSession, user: user });
+        })
+        .catch((error) => {
+          console.log(error);
+          return res
+            .status(500)
+            .json({ errorMessage: "Login failed", error: error });
+        });
+    } else {
+      session.expires = Date.now() + SESSION_EXPIRATION;
+      session
+        .save()
+        .then(() => res.status(201).json({ session: session, user: user }))
+        .catch((error) => {
+          console.log(error);
+          return res
+            .status(500)
+            .json({ errorMessage: "Login failed", error: error });
+        });
+    }
   });
 }
-
 
 module.exports = router;

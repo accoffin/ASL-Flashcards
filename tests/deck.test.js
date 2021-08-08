@@ -1,5 +1,6 @@
 const request = require("supertest");
 const app = require("../app");
+const ERRORS = require("../errors/deck.errors");
 
 // ok, so... the current deck is pulled in initially as part of the user data
 // from login. But we need additional decks to be rendered if the user has
@@ -9,27 +10,27 @@ const app = require("../app");
 describe("Test deck creation", () => {
   test("POST /deck/create responds with deck title", () => {});
 
-  test("Error for missing title", () => {});
+  // test("Error for missing title", () => {});
 
-  test("Error for invalid title", () => {});
+  // test("Error for invalid title", () => {});
 });
 
-describe("Test individual deck retrieval", () => {
-  test("GET /deck/:id responds with deck title and glosses/gifs for each card", () => {});
+// describe("Test individual deck retrieval", () => {
+//   test("GET /deck/:id responds with deck title and glosses/gifs for each card", () => {});
 
-  test("Error for ...", () => {});
-});
+//   test("Error for ...", () => {});
+// });
 
-describe("Test deck updating", () => {
-  test("POST /deck/:id/update responds with success", () => {});
+// describe("Test deck updating", () => {
+//   test("POST /deck/:id/update responds with success", () => {});
 
-  test("Error for missing title", () => {});
+//   test("Error for missing title", () => {});
 
-  test("Error for invalid title", () => {});
-});
+//   test("Error for invalid title", () => {});
+// });
 
-describe("Test deck deletion", () => {
-  test("POST /deck/:id/delete responds with success", () => {});
+// describe("Test deck deletion", () => {
+//   test("POST /deck/:id/delete responds with success", () => {});
 
-  test("Error for ...", () => {});
-});
+//   test("Error for ...", () => {});
+// });
