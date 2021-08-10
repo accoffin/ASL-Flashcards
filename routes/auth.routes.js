@@ -54,6 +54,7 @@ router.post("/signup", async (req, res) => {
           const { deck, user } = deckAndUser;
           deck.cards = [];
           user.currentDeck = deck;
+          user.decks[0] = deck;
           login(res, user);
         })
         .catch((error) => {
@@ -80,6 +81,7 @@ router.post("/login", (req, res) => {
           select: "gloss gif",
         },
       })
+      .populate("decks")
       .then((user) => {
         if (!user) {
           return res.status(400).json(ERRORS.LOGIN.EMAIL_NOT_FOUND);

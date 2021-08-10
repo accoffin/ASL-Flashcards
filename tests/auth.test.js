@@ -8,12 +8,17 @@ const Flashcard = require("../models/Flashcard.model");
 const ERRORS = require("../errors/auth.errors");
 
 describe("Test the signup route", () => {
-  const TEST_EMAIL = "TESTABOB1";
-  const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
-  const TEST_ADMIN = false;
+  const TEST_USER = {
+    email: "TESTABOB1",
+    password: "1two3Four_flyya38480583yfklg"
+  };
+
+  beforeAll(() => {
+
+  });
 
   afterAll((done) => {
-    User.findOneAndDelete({ email: `${TEST_EMAIL}` }).then((user) => {
+    User.findOneAndDelete({ email: TEST_USER.email }).then((user) => {
       const deckDelete = Deck.findByIdAndDelete(user.decks[0]).exec();
       const sessionDelete = Session.findOneAndDelete({ user: user._id }).exec();
       Promise.all([deckDelete, sessionDelete]).finally(() => {
@@ -25,19 +30,19 @@ describe("Test the signup route", () => {
   test("POST /auth/signup responds with user data and session", () => {
     return request(app)
       .post("/auth/signup")
-      .send({
-        email: TEST_EMAIL,
-        password: TEST_PASSWORD,
-        isAdmin: TEST_ADMIN,
-      })
+      .send(TEST_USER)
       .then((response) => {
         const { user, session } = response.body;
-        console.log(response.body);
         expect(response.statusCode).toBe(201);
         expect(session.user).toBe(user._id);
-
-        expect(user.currentDeck?.name).toBe("First Deck!");
-        expect(user.currentDeck?.cards).toStrictEqual([]);
+        const currentDeck = user.currentDeck;
+        expect(currentDeck.name).toBeDefined();
+        expect(currentDeck.cards).toStrictEqual([]);
+        expect(currentDeck.color).toBeDefined();
+        const firstDeck = user.decks[0];
+        expect(firstDeck.name).toBeDefined();
+        expect(firstDeck.cards).toStrictEqual([]);
+        expect(firstDeck.color).toBeDefined();
         expect(user.currentMode).toBe("receptive");
       });
   });
@@ -45,10 +50,7 @@ describe("Test the signup route", () => {
   test("Error for missing email", () => {
     return request(app)
       .post("/auth/signup")
-      .send({
-        password: TEST_PASSWORD,
-        isAdmin: TEST_ADMIN,
-      })
+      .send({ password: TEST_USER.password })
       .then((response) => {
         expect(response.statusCode).toBe(400);
         expect(response.body.errorMessage).toBe(
@@ -60,11 +62,7 @@ describe("Test the signup route", () => {
   test("Error for email already taken", () => {
     return request(app)
       .post("/auth/signup")
-      .send({
-        email: TEST_EMAIL,
-        password: TEST_PASSWORD,
-        isAdmin: TEST_ADMIN,
-      })
+      .send(TEST_USER)
       .then((response) => {
         expect(response.statusCode).toBe(400);
         expect(response.body.errorMessage).toBe(
@@ -76,10 +74,7 @@ describe("Test the signup route", () => {
   test("Error for missing password", () => {
     return request(app)
       .post("/auth/signup")
-      .send({
-        email: TEST_EMAIL,
-        isAdmin: TEST_ADMIN,
-      })
+      .send({ email: TEST_USER.email })
       .then((response) => {
         expect(response.statusCode).toBe(400);
         expect(response.body.errorMessage).toBe(
@@ -92,9 +87,8 @@ describe("Test the signup route", () => {
     return request(app)
       .post("/auth/signup")
       .send({
-        email: TEST_EMAIL,
+        email: TEST_USER.email,
         password: "pwd",
-        isAdmin: TEST_ADMIN,
       })
       .then((response) => {
         expect(response.statusCode).toBe(400);
@@ -108,7 +102,6 @@ describe("Test the signup route", () => {
 describe("Test the login route", () => {
   const TEST_EMAIL =  "TESTABOB2";
   const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
-  const TEST_ADMIN = false;
 
   const TEST_CARD = {
     gloss: "TEST",
@@ -122,7 +115,6 @@ describe("Test the login route", () => {
       .send({
         email: TEST_EMAIL,
         password: TEST_PASSWORD,
-        isAdmin: TEST_ADMIN,
       })
       .then((response) => {
         return Flashcard.create(TEST_CARD).then(card => { return {
@@ -160,10 +152,15 @@ describe("Test the login route", () => {
     expect(response.statusCode).toBe(201);
     expect(firstSession.user).toBe(firstUser._id);
     expect(firstUser.currentMode).toBeDefined();
-    const deck = firstUser.currentDeck;
-    expect(deck?.name).toBeDefined();
-    expect(deck?.cards).toBeDefined();
-    const cardInDeck = deck.cards[0];
+    const unselectedDeck = firstUser.decks[0];
+    expect(unselectedDeck.name).toBeDefined();
+    expect(unselectedDeck.cards).toBeDefined();
+    expect(unselectedDeck.color).toBeDefined();
+    const currentDeck = firstUser.currentDeck;
+    expect(currentDeck.name).toBeDefined();
+    expect(currentDeck.cards).toBeDefined();
+    expect(currentDeck.color).toBeDefined();
+    const cardInDeck = currentDeck.cards[0];
     expect(cardInDeck.gloss).toBeDefined();
     expect(cardInDeck.gif).toBeDefined();
     expect(Object.keys(cardInDeck).length).toBe(3);
@@ -223,7 +220,6 @@ describe("Test the login route", () => {
 describe("Test the logout route", () => {
   const TEST_EMAIL = "TESTABOB3";
   const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
-  const TEST_ADMIN = false;
 
   let TEST_SESSION = null;
 
@@ -233,7 +229,6 @@ describe("Test the logout route", () => {
       .send({
         email: TEST_EMAIL,
         password: TEST_PASSWORD,
-        isAdmin: TEST_ADMIN,
       })
       .then((response) => {
         TEST_SESSION = response.body.session;
@@ -245,7 +240,7 @@ describe("Test the logout route", () => {
 
   afterAll((done) => {
     User.findOneAndDelete({ email: `${TEST_EMAIL}` }).then((user) => {
-      const deckDelete = Deck.findByIdAndDelete(user.currentDeck).exec();
+      const deckDelete = Deck.findByIdAndDelete(user.decks[0]).exec();
       const sessionDelete = Session.findOneAndDelete({ user: user._id }).exec();
       Promise.all([deckDelete, sessionDelete]).finally(() => {
         done();
