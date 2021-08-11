@@ -132,7 +132,7 @@ function login(res, user) {
       session.expires = Date.now() + SESSION_EXPIRATION;
       session
         .save()
-        .then(() => res.status(201).json({ session: session, user: user }))
+        .then(() => res.status(200).json({ session: session, user: user }))
         .catch((error) => {
           console.log(error);
           return res

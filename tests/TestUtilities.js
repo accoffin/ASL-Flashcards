@@ -17,78 +17,93 @@ const OPTIONS = {
   USER: {
     LOGGED_IN: "loggedIn",
     DECKS: "decks",
+  },
+  DECK: {
+    CARDS: "cards"
   }
 };
 
 const SESSION_EXPIRATION = 1000 * 60 * 30; //Sessions live for 30 minutes
 
-module.exports = {
 
+const createCard = (card) => {
+  const idCollection = [];
+  return idCollection;
+};
 
-  mockCard: (card) => {
-    const idCollection = [];
-    return idCollection;
-  },
-
-  mockDeck: (deck) => {
-    const idCollection = [];
-    return idCollection;
-  },
-
-  mockUser: async (user, options) => {
-    const idCollection = [];
-
-    if (options[OPTIONS.USER.DECKS]) {
-      const decks = options[OPTIONS.USER.DECKS];
-      const deckIds = [];
-      for (const deck of decks) {
-        const cardIds = [];
-        for (const card of deck.cards) {
-          await Flashcard.create(card).then(card => {
-            idCollection.push({type: MODELS.CARD, id: card._id});
-            cardIds.push(card._id);
-          })
-          .catch(() => {
-            console.log("Warning: unable to create test card");
-          });
-        }
-        deck.cards = cardIds;
-        await Deck.create(deck).then((deck) => {
-          idCollection.push({type: MODELS.DECK, id: deck._id});
-          deckIds.push(deck._id);
-        })
-        .catch(() => {
-          console.log("Warning: unable to create test deck");
-        });
-      }
-      user.decks = deckIds;
-      user.currentDeck = deckIds[0];
-    }
-    user.passhash = await bcrypt.genSalt(saltRounds).then((salt) => bcrypt.hash(user.password, salt));
-    delete user.password;
-    const newUser = await User.create(user)
-    .then(user => {
-      idCollection.push({type: MODELS.USER, id: user._id});
-      return user;
-    })
-    .catch(() => {
-      console.log("Warning: unable to create test user");
-    });
-    if (options[OPTIONS.USER.LOGGED_IN]) {
-      await Session.create({
-        user: newUser?._id, 
-        expires: Date.now() + SESSION_EXPIRATION
+const createDeck = async (deck, options) => {
+  const idCollection = [];
+  if (options[OPTIONS.DECK.CARDS]) {
+    const cards = options[OPTIONS.DECK.CARDS];
+    const cardIds = [];
+    for (const card of cards) {
+      await Flashcard.create(card).then(card => {
+        idCollection.push({type: MODELS.CARD, id: card._id});
+        cardIds.push(card._id);
       })
-      .then(session => {
-        idCollection.push({type: MODELS.SESSION, id: session._id});
-      })
-      .catch(() => {
-        console.log("Warning: unable to create test session");
+      .catch((error) => {
+        console.log("Warning: unable to create test card", error);
       });
     }
-    return idCollection;
-  },
+    deck.cards = cardIds;
+  }
+  await Deck.create(deck).then((deck) => {
+    idCollection.push({type: MODELS.DECK, id: deck._id});
+  })
+  .catch(() => {
+    console.log("Warning: unable to create test deck");
+  });
+  return idCollection;
+};
 
+const createUser = async (user, options) => {
+  const idCollection = [];
+
+  if (options[OPTIONS.USER.DECKS]) {
+    const decks = options[OPTIONS.USER.DECKS];
+    const deckIds = [];
+    for (const deck of decks) {
+      const {name, color, cards} = deck;
+      const deckDocuments = await createDeck(
+        {name, color},
+        { [OPTIONS.DECK.CARDS]: cards }        
+      );
+      const deckItself = deckDocuments[deckDocuments.length - 1];
+      if (deckItself?.type === MODELS.DECK) deckIds.push(deckItself.id);
+      idCollection.push(...deckDocuments);
+    }
+    user.decks = deckIds;
+    user.currentDeck = deckIds[0];
+  }
+  user.passhash = await bcrypt.genSalt(saltRounds).then((salt) => bcrypt.hash(user.password, salt));
+  delete user.password;
+  const newUser = await User.create(user)
+  .then(user => {
+    idCollection.push({type: MODELS.USER, id: user._id});
+    return user;
+  })
+  .catch(() => {
+    console.log("Warning: unable to create test user");
+  });
+  if (options[OPTIONS.USER.LOGGED_IN]) {
+    await Session.create({
+      user: newUser?._id, 
+      expires: Date.now() + SESSION_EXPIRATION
+    })
+    .then(session => {
+      idCollection.push({type: MODELS.SESSION, id: session._id});
+    })
+    .catch(() => {
+      console.log("Warning: unable to create test session");
+    });
+  }
+  return idCollection;
+};
+
+module.exports = {
+  mockCard: createCard,
+  mockDeck: createDeck,
+  mockUser: createUser,
   tearDown: (idCollection) => {
     const documentDeletions = [];
     for (const document of idCollection) {

@@ -150,6 +150,7 @@ describe("Test the login route", () => {
     expect(cardInDeck.gloss).toBeDefined();
     expect(cardInDeck.gif).toBeDefined();
     expect(Object.keys(cardInDeck).length).toBe(3);
+    TEST_USER.push({type: "session", id: firstSession._id});
 
     const didSessionRecycleResponse = await request(app)
       .post("/auth/login")
@@ -158,6 +159,7 @@ describe("Test the login route", () => {
         password: TEST_PASSWORD,
       });
     const { session: secondSession } = didSessionRecycleResponse.body;
+    expect(didSessionRecycleResponse.statusCode).toBe(200);
     expect(secondSession._id).toBe(firstSession._id);
   });
 
@@ -216,9 +218,7 @@ describe("Test the logout route", () => {
         email: TEST_EMAIL,
         password: TEST_PASSWORD
       }, 
-      {
-        loggedIn: true
-      }
+      { loggedIn: true }
     );
     TEST_SESSION = TEST_USER[TEST_USER.length - 1].id;
   });
