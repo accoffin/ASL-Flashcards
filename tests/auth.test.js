@@ -7,24 +7,18 @@ const Deck = require("../models/Deck.model");
 const Flashcard = require("../models/Flashcard.model");
 const ERRORS = require("../errors/auth.errors");
 
+const Utilities = require("./TestUtilities");
+
 describe("Test the signup route", () => {
   const TEST_USER = {
     email: "TESTABOB1",
     password: "1two3Four_flyya38480583yfklg"
   };
 
-  beforeAll(() => {
+  const testUserDocuments = [];
 
-  });
-
-  afterAll((done) => {
-    User.findOneAndDelete({ email: TEST_USER.email }).then((user) => {
-      const deckDelete = Deck.findByIdAndDelete(user.decks[0]).exec();
-      const sessionDelete = Session.findOneAndDelete({ user: user._id }).exec();
-      Promise.all([deckDelete, sessionDelete]).finally(() => {
-        done();
-      });
-    });
+  afterAll(() => {
+    return Utilities.tearDown(testUserDocuments);
   });
 
   test("POST /auth/signup responds with user data and session", () => {
@@ -44,6 +38,11 @@ describe("Test the signup route", () => {
         expect(firstDeck.cards).toStrictEqual([]);
         expect(firstDeck.color).toBeDefined();
         expect(user.currentMode).toBe("receptive");
+        testUserDocuments.push(
+          {type: "user", id: user._id}, 
+          {type: "session", id: session._id},
+          {type: "deck", id: firstDeck._id},
+        );
       });
   });
 
@@ -100,47 +99,34 @@ describe("Test the signup route", () => {
 });
 
 describe("Test the login route", () => {
-  const TEST_EMAIL =  "TESTABOB2";
+  const TEST_EMAIL = "TESTABOB2";
   const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
-
   const TEST_CARD = {
     gloss: "TEST",
     gif: "No URL for gif",
     category: "common phrases",
   };
 
-  beforeAll(() => {
-    return request(app)
-      .post("/auth/signup")
-      .send({
-        email: TEST_EMAIL,
-        password: TEST_PASSWORD,
-      })
-      .then((response) => {
-        return Flashcard.create(TEST_CARD).then(card => { return {
-          deck: response.body.user.currentDeck,
-          card
-        };});
-      })
-      .then(deckandCard => {
-        const {deck, card} = deckandCard;
-        return Deck.findByIdAndUpdate(deck._id, {cards: [card._id]})
-      })
-      .catch((error) => {
-        console.log("Error creating test user: ", error);
-      });
+  let TEST_USER;
+
+  beforeAll(async () => {
+    TEST_USER = await Utilities.mockUser({
+      email: TEST_EMAIL,
+      password: TEST_PASSWORD
+    },
+    {
+      decks: [
+        {
+          name: "First Deck!",
+          color: "#000000",
+          cards: [TEST_CARD]
+        }
+      ]
+    });
   });
 
-  afterAll((done) => {
-    User.findOneAndDelete({ email: `${TEST_EMAIL}` }).then((user) => {
-      const deckDelete = Deck.findByIdAndDelete(user.decks[0]).then(deck => {
-        Flashcard.findByIdAndDelete(deck.cards[0]).exec();
-      });
-      const sessionDelete = Session.findOneAndDelete({ user: user._id }).exec();
-      Promise.all([deckDelete, sessionDelete]).finally(() => {
-        done();
-      });
-    });
+  afterAll(() => {
+    return Utilities.tearDown(TEST_USER);
   });
 
   test("POST /auth/login responds with User and Session", async () => {
@@ -221,37 +207,30 @@ describe("Test the logout route", () => {
   const TEST_EMAIL = "TESTABOB3";
   const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
 
-  let TEST_SESSION = null;
+  let TEST_SESSION
+  let TEST_USER;
 
-  beforeAll(() => {
-    return request(app)
-      .post("/auth/signup")
-      .send({
+  beforeAll(async () => {
+    TEST_USER = await Utilities.mockUser(
+      {
         email: TEST_EMAIL,
-        password: TEST_PASSWORD,
-      })
-      .then((response) => {
-        TEST_SESSION = response.body.session;
-      })
-      .catch((error) => {
-        console.log("Error creating test user: ", error);
-      });
+        password: TEST_PASSWORD
+      }, 
+      {
+        loggedIn: true
+      }
+    );
+    TEST_SESSION = TEST_USER[TEST_USER.length - 1].id;
   });
 
-  afterAll((done) => {
-    User.findOneAndDelete({ email: `${TEST_EMAIL}` }).then((user) => {
-      const deckDelete = Deck.findByIdAndDelete(user.decks[0]).exec();
-      const sessionDelete = Session.findOneAndDelete({ user: user._id }).exec();
-      Promise.all([deckDelete, sessionDelete]).finally(() => {
-        done();
-      });
-    });
+  afterAll(() => {
+    Utilities.tearDown(TEST_USER);
   });
 
   test("POST /auth/logout responds with success", () => {
     return request(app)
       .post("/auth/logout")
-      .set("authorization", `${TEST_SESSION._id}`)
+      .set("authorization", `${TEST_SESSION}`)
       .then((response) => {
         expect(response.statusCode).toBe(200);
       });
