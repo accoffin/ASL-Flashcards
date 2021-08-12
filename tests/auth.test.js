@@ -1,12 +1,7 @@
 const request = require("supertest");
 const app = require("../app");
 
-const User = require("../models/User.model");
-const Session = require("../models/Session.model");
-const Deck = require("../models/Deck.model");
-const Flashcard = require("../models/Flashcard.model");
-const ERRORS = require("../errors/auth.errors");
-
+const AUTHERRORS = require("../errors/auth.errors");
 const Utilities = require("./TestUtilities");
 
 describe("Test the signup route", () => {
@@ -53,7 +48,7 @@ describe("Test the signup route", () => {
       .then((response) => {
         expect(response.statusCode).toBe(400);
         expect(response.body.errorMessage).toBe(
-          ERRORS.SIGNUP.MISSING_EMAIL.errorMessage
+          AUTHERRORS.SIGNUP.MISSING_EMAIL.errorMessage
         );
       });
   });
@@ -65,7 +60,7 @@ describe("Test the signup route", () => {
       .then((response) => {
         expect(response.statusCode).toBe(400);
         expect(response.body.errorMessage).toBe(
-          ERRORS.SIGNUP.ALREADY_REGISTERED.errorMessage
+          AUTHERRORS.SIGNUP.ALREADY_REGISTERED.errorMessage
         );
       });
   });
@@ -77,7 +72,7 @@ describe("Test the signup route", () => {
       .then((response) => {
         expect(response.statusCode).toBe(400);
         expect(response.body.errorMessage).toBe(
-          ERRORS.SIGNUP.INVALID_PASSWORD.errorMessage
+          AUTHERRORS.SIGNUP.INVALID_PASSWORD.errorMessage
         );
       });
   });
@@ -92,7 +87,7 @@ describe("Test the signup route", () => {
       .then((response) => {
         expect(response.statusCode).toBe(400);
         expect(response.body.errorMessage).toBe(
-          ERRORS.SIGNUP.INVALID_PASSWORD.errorMessage
+          AUTHERRORS.SIGNUP.INVALID_PASSWORD.errorMessage
         );
       });
   });
@@ -171,7 +166,7 @@ describe("Test the login route", () => {
       })
       .then((response) => {
         expect(response.body.errorMessage).toBe(
-          ERRORS.LOGIN.MISSING_EMAIL.errorMessage
+          AUTHERRORS.LOGIN.MISSING_EMAIL.errorMessage
         );
       });
   });
@@ -185,7 +180,7 @@ describe("Test the login route", () => {
       })
       .then((response) => {
         expect(response.body.errorMessage).toBe(
-          ERRORS.LOGIN.EMAIL_NOT_FOUND.errorMessage
+          AUTHERRORS.LOGIN.EMAIL_NOT_FOUND.errorMessage
         );
       });
   });
@@ -199,7 +194,7 @@ describe("Test the login route", () => {
       })
       .then((response) => {
         expect(response.body.errorMessage).toBe(
-          ERRORS.LOGIN.INCORRECT_PASSWORD.errorMessage
+          AUTHERRORS.LOGIN.INCORRECT_PASSWORD.errorMessage
         );
       });
   });
@@ -242,7 +237,7 @@ describe("Test the logout route", () => {
       .then((response) => {
         expect(response.statusCode).toBe(403);
         expect(response.body.errorMessage).toBe(
-          ERRORS.LOGOUT.NOT_LOGGED_IN.errorMessage
+          AUTHERRORS.LOGOUT.NOT_LOGGED_IN.errorMessage
         );
       });
   });

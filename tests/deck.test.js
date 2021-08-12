@@ -1,6 +1,8 @@
 const request = require("supertest");
 const app = require("../app");
-const ERRORS = require("../errors/deck.errors");
+
+const DECKERRORS = require("../errors/deck.errors");
+const Utilities = require("./TestUtilities");
 
 // ok, so... the current deck is pulled in initially as part of the user data
 // from login. But we need additional decks to be rendered if the user has
@@ -8,11 +10,45 @@ const ERRORS = require("../errors/deck.errors");
 // has populated card data
 
 describe("Test deck creation", () => {
-  test("POST /deck/create responds with deck title", () => {});
 
-  // test("Error for missing title", () => {});
+  const TEST_DECK = { name: "TEST" };
+  const TEST_DECK_SAME_NAME = { name: "TEST" };
 
-  // test("Error for invalid title", () => {});
+  let testDeckDocuments = [];
+
+  afterAll(() => {
+    return Utilities.tearDown(testDeckDocuments);
+  });
+
+  test("POST /deck/create responds with deck title", async () => {
+    const firstResponse = await request(app)
+      .post("/deck/create")
+      .send(TEST_DECK);
+    expect(firstResponse.statusCode).toBe(201);
+    const firstDeck = firstResponse.body;
+    testDeckDocuments.push({type: "deck", id: firstDeck?._id});
+    expect(firstDeck?.name).toBe(TEST_DECK.name);
+    expect(firstDeck?.cards).toStrictEqual([]);
+    expect(firstDeck?.color).toBe("#000000");
+
+    const sameTitlesHaveDifferentColorsResponse = await request(app)
+      .post("/deck/create")
+      .send(TEST_DECK_SAME_NAME);
+    expect(sameTitlesHaveDifferentColorsResponse.statusCode).toBe(201);
+    const differentColorDeck = sameTitlesHaveDifferentColorsResponse.body;
+    testDeckDocuments.push({type: "deck", id: differentColorDeck?._id});
+    expect(differentColorDeck?.color).not.toBe(firstDeck?.color);
+  });
+
+  test("Error for missing title", () => {
+    return request(app)
+      .post("/deck/create")
+      .send({})
+      .then(response => {
+        expect(response.statusCode).toBe(400);
+        expect(response.body.errorMessage).toBe(DECKERRORS.CREATE.MISSING_NAME.errorMessage);
+      });
+  });
 });
 
 // describe("Test individual deck retrieval", () => {
