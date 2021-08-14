@@ -100,7 +100,12 @@ const createUser = async (user, options) => {
   return idCollection;
 };
 
+const getUser = async (id) => {
+  return await User.findById(id).exec();
+};
+
 module.exports = {
+  getUser: getUser,
   mockCard: createCard,
   mockDeck: createDeck,
   mockUser: createUser,

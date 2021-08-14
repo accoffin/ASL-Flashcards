@@ -14,35 +14,69 @@ describe("Test deck creation", () => {
   const TEST_DECK = { name: "TEST" };
   const TEST_DECK_SAME_NAME = { name: "TEST" };
 
-  let testDeckDocuments = [];
+  let TEST_CREDENTIALS;
+  let TEST_USERID;
+
+  let testDocuments;
+
+  beforeAll(async () => {
+    testDocuments = await Utilities.mockUser({
+      email: "TESTABOB",
+      password: "1two3Four_flyya38480583yfklg"
+    },
+    { loggedIn: true }
+    );
+    TEST_CREDENTIALS = testDocuments[testDocuments.length - 1].id;
+    TEST_USERID = testDocuments[testDocuments.length - 2].id;
+  });
 
   afterAll(() => {
-    return Utilities.tearDown(testDeckDocuments);
+    return Utilities.tearDown(testDocuments);
   });
 
   test("POST /deck/create responds with deck title", async () => {
     const firstResponse = await request(app)
+      .set("authorization", `${TEST_CREDENTIALS}`)
       .post("/deck/create")
       .send(TEST_DECK);
     expect(firstResponse.statusCode).toBe(201);
     const firstDeck = firstResponse.body;
-    testDeckDocuments.push({type: "deck", id: firstDeck?._id});
+    testDocuments.push({type: "deck", id: firstDeck?._id});
     expect(firstDeck?.name).toBe(TEST_DECK.name);
     expect(firstDeck?.cards).toStrictEqual([]);
     expect(firstDeck?.color).toBe("#000000");
 
+    const user = await Utilities.getUser(TEST_USERID);
+    const newestDeckId = user.decks[user.decks.length - 1];
+    expect(newestDeckId).toBe(firstDeck._id);
+
+
+
     const sameTitlesHaveDifferentColorsResponse = await request(app)
       .post("/deck/create")
+      .set("authorization", `${TEST_CREDENTIALS}`)
       .send(TEST_DECK_SAME_NAME);
     expect(sameTitlesHaveDifferentColorsResponse.statusCode).toBe(201);
     const differentColorDeck = sameTitlesHaveDifferentColorsResponse.body;
-    testDeckDocuments.push({type: "deck", id: differentColorDeck?._id});
+    testDocuments.push({type: "deck", id: differentColorDeck?._id});
     expect(differentColorDeck?.color).not.toBe(firstDeck?.color);
+  });
+
+  test("Error for invalid credentials", () => {
+    return request(app)
+      .post("/deck/create")
+      .set("authorization", `${TEST_CREDENTIALS}`)
+      .send(TEST_DECK)
+      .then(response => {
+        expect(response.statusCode).toBe(403);
+        expect(response.body.errorMessage).toBe(DECKERRORS.AUTH.UNAUTHORIZED.errorMessage);
+      });
   });
 
   test("Error for missing title", () => {
     return request(app)
       .post("/deck/create")
+      .set("authorization", `${TEST_CREDENTIALS}`)
       .send({})
       .then(response => {
         expect(response.statusCode).toBe(400);
