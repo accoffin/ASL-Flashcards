@@ -10,7 +10,6 @@ const Utilities = require("./TestUtilities");
 // has populated card data
 
 describe("Test deck creation", () => {
-
   const TEST_DECK = { name: "TEST" };
   const TEST_DECK_SAME_NAME = { name: "TEST" };
 
@@ -20,11 +19,12 @@ describe("Test deck creation", () => {
   let testDocuments;
 
   beforeAll(async () => {
-    testDocuments = await Utilities.mockUser({
-      email: "TESTABOB",
-      password: "1two3Four_flyya38480583yfklg"
-    },
-    { loggedIn: true }
+    testDocuments = await Utilities.mockUser(
+      {
+        email: "TESTABOB",
+        password: "1two3Four_flyya38480583yfklg",
+      },
+      { loggedIn: true }
     );
     TEST_CREDENTIALS = testDocuments[testDocuments.length - 1].id;
     TEST_USERID = testDocuments[testDocuments.length - 2].id;
@@ -41,7 +41,7 @@ describe("Test deck creation", () => {
       .send(TEST_DECK);
     expect(firstResponse.statusCode).toBe(201);
     const firstDeck = firstResponse.body;
-    testDocuments.push({type: "deck", id: firstDeck?._id});
+    testDocuments.push({ type: "deck", id: firstDeck?._id });
     expect(firstDeck?.name).toBe(TEST_DECK.name);
     expect(firstDeck?.cards).toStrictEqual([]);
     expect(firstDeck?.color).toBe("#000000");
@@ -50,15 +50,13 @@ describe("Test deck creation", () => {
     const newestDeckId = user.decks[user.decks.length - 1];
     expect(newestDeckId).toBe(firstDeck._id);
 
-
-
     const sameTitlesHaveDifferentColorsResponse = await request(app)
       .post("/deck/create")
       .set("authorization", `${TEST_CREDENTIALS}`)
       .send(TEST_DECK_SAME_NAME);
     expect(sameTitlesHaveDifferentColorsResponse.statusCode).toBe(201);
     const differentColorDeck = sameTitlesHaveDifferentColorsResponse.body;
-    testDocuments.push({type: "deck", id: differentColorDeck?._id});
+    testDocuments.push({ type: "deck", id: differentColorDeck?._id });
     expect(differentColorDeck?.color).not.toBe(firstDeck?.color);
   });
 
@@ -67,9 +65,11 @@ describe("Test deck creation", () => {
       .post("/deck/create")
       .set("authorization", `${TEST_CREDENTIALS}`)
       .send(TEST_DECK)
-      .then(response => {
+      .then((response) => {
         expect(response.statusCode).toBe(403);
-        expect(response.body.errorMessage).toBe(DECKERRORS.AUTH.UNAUTHORIZED.errorMessage);
+        expect(response.body.errorMessage).toBe(
+          DECKERRORS.AUTH.UNAUTHORIZED.errorMessage
+        );
       });
   });
 
@@ -78,29 +78,38 @@ describe("Test deck creation", () => {
       .post("/deck/create")
       .set("authorization", `${TEST_CREDENTIALS}`)
       .send({})
-      .then(response => {
+      .then((response) => {
         expect(response.statusCode).toBe(400);
-        expect(response.body.errorMessage).toBe(DECKERRORS.CREATE.MISSING_NAME.errorMessage);
+        expect(response.body.errorMessage).toBe(
+          DECKERRORS.CREATE.MISSING_NAME.errorMessage
+        );
       });
   });
 });
 
-// describe("Test individual deck retrieval", () => {
-//   test("GET /deck/:id responds with deck title and glosses/gifs for each card", () => {});
+describe("Test individual deck retrieval", () => {
+  test("GET /deck/:id responds with glosses/gifs for each card in the deck", () => {});
 
-//   test("Error for ...", () => {});
-// });
+  test("Error for invalid credentials", () => {});
 
-// describe("Test deck updating", () => {
-//   test("POST /deck/:id/update responds with success", () => {});
+  test("Error for invalid id", () => {});
+});
 
-//   test("Error for missing title", () => {});
+describe("Test deck updating", () => {
+  test("POST /deck/:id/update responds with success", () => {
+    //changes (not the whole deck) are sent periodically
+    //contains card ids added and removed
+  });
 
-//   test("Error for invalid title", () => {});
-// });
+  test("Error for invalid credentials", () => {});
 
-// describe("Test deck deletion", () => {
-//   test("POST /deck/:id/delete responds with success", () => {});
+  test("Error for invalid id", () => {});
+});
 
-//   test("Error for ...", () => {});
-// });
+describe("Test deck deletion", () => {
+  test("POST /deck/:id/delete responds with success", () => {});
+
+  test("Error for invalid credentials", () => {});
+
+  test("Error for invalid id", () => {});
+});
