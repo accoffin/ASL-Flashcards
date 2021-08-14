@@ -36,8 +36,8 @@ describe("Test deck creation", () => {
 
   test("POST /deck/create responds with deck title", async () => {
     const firstResponse = await request(app)
-      .set("authorization", `${TEST_CREDENTIALS}`)
       .post("/deck/create")
+      .set("authorization", `${TEST_CREDENTIALS}`)
       .send(TEST_DECK);
     expect(firstResponse.statusCode).toBe(201);
     const firstDeck = firstResponse.body;
