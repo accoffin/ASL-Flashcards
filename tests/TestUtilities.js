@@ -19,12 +19,11 @@ const OPTIONS = {
     DECKS: "decks",
   },
   DECK: {
-    CARDS: "cards"
-  }
+    CARDS: "cards",
+  },
 };
 
 const SESSION_EXPIRATION = 1000 * 60 * 30; //Sessions live for 30 minutes
-
 
 const createCard = (card) => {
   const idCollection = [];
@@ -37,22 +36,24 @@ const createDeck = async (deck, options) => {
     const cards = options[OPTIONS.DECK.CARDS];
     const cardIds = [];
     for (const card of cards) {
-      await Flashcard.create(card).then(card => {
-        idCollection.push({type: MODELS.CARD, id: card._id});
-        cardIds.push(card._id);
-      })
-      .catch((error) => {
-        console.log("Warning: unable to create test card", error);
-      });
+      await Flashcard.create(card)
+        .then((card) => {
+          idCollection.push({ type: MODELS.CARD, id: card._id });
+          cardIds.push(card._id);
+        })
+        .catch((error) => {
+          console.log("Warning: unable to create test card", error);
+        });
     }
     deck.cards = cardIds;
   }
-  await Deck.create(deck).then((deck) => {
-    idCollection.push({type: MODELS.DECK, id: deck._id});
-  })
-  .catch(() => {
-    console.log("Warning: unable to create test deck");
-  });
+  await Deck.create(deck)
+    .then((deck) => {
+      idCollection.push({ type: MODELS.DECK, id: deck._id });
+    })
+    .catch(() => {
+      console.log("Warning: unable to create test deck");
+    });
   return idCollection;
 };
 
@@ -63,10 +64,10 @@ const createUser = async (user, options) => {
     const decks = options[OPTIONS.USER.DECKS];
     const deckIds = [];
     for (const deck of decks) {
-      const {name, color, cards} = deck;
+      const { name, color, cards } = deck;
       const deckDocuments = await createDeck(
-        {name, color},
-        { [OPTIONS.DECK.CARDS]: cards }        
+        { name, color },
+        { [OPTIONS.DECK.CARDS]: cards }
       );
       const deckItself = deckDocuments[deckDocuments.length - 1];
       if (deckItself?.type === MODELS.DECK) deckIds.push(deckItself.id);
@@ -75,27 +76,29 @@ const createUser = async (user, options) => {
     user.decks = deckIds;
     user.currentDeck = deckIds[0];
   }
-  user.passhash = await bcrypt.genSalt(saltRounds).then((salt) => bcrypt.hash(user.password, salt));
+  user.passhash = await bcrypt
+    .genSalt(saltRounds)
+    .then((salt) => bcrypt.hash(user.password, salt));
   delete user.password;
   const newUser = await User.create(user)
-  .then(user => {
-    idCollection.push({type: MODELS.USER, id: user._id});
-    return user;
-  })
-  .catch(() => {
-    console.log("Warning: unable to create test user");
-  });
-  if (options[OPTIONS.USER.LOGGED_IN]) {
-    await Session.create({
-      user: newUser?._id, 
-      expires: Date.now() + SESSION_EXPIRATION
-    })
-    .then(session => {
-      idCollection.push({type: MODELS.SESSION, id: session._id});
+    .then((user) => {
+      idCollection.push({ type: MODELS.USER, id: user._id });
+      return user;
     })
     .catch(() => {
-      console.log("Warning: unable to create test session");
+      console.log("Warning: unable to create test user");
     });
+  if (options[OPTIONS.USER.LOGGED_IN]) {
+    await Session.create({
+      user: newUser?._id,
+      expires: Date.now() + SESSION_EXPIRATION,
+    })
+      .then((session) => {
+        idCollection.push({ type: MODELS.SESSION, id: session._id });
+      })
+      .catch(() => {
+        console.log("Warning: unable to create test session");
+      });
   }
   return idCollection;
 };
@@ -104,8 +107,18 @@ const getUser = async (id) => {
   return await User.findById(id).exec();
 };
 
+const getSession = async (id) => {
+  return await Session.findById(id).exec();
+};
+
+const getDeck = async (id) => {
+  return await Deck.findById(id).exec();
+};
+
 module.exports = {
+  getDeck: getDeck,
   getUser: getUser,
+  getSession: getSession,
   mockCard: createCard,
   mockDeck: createDeck,
   mockUser: createUser,

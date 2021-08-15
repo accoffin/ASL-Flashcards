@@ -34,7 +34,7 @@ describe("Test deck creation", () => {
     return Utilities.tearDown(testDocuments);
   });
 
-  test("POST /deck/create responds with deck title", async () => {
+  test("POST /deck/create responds with deck title and color", async () => {
     const firstResponse = await request(app)
       .post("/deck/create")
       .set("authorization", `${TEST_CREDENTIALS}`)
@@ -97,7 +97,7 @@ describe("Test individual deck retrieval", () => {
 
 describe("Test deck updating", () => {
   test("POST /deck/:id/update responds with success", () => {
-    //changes (not the whole deck) are sent periodically
+    //send changes (not the whole deck)
     //contains card ids added and removed
   });
 
@@ -107,9 +107,69 @@ describe("Test deck updating", () => {
 });
 
 describe("Test deck deletion", () => {
-  test("POST /deck/:id/delete responds with success", () => {});
+  const TEST_DECK = {
+    name: "TEST",
+    cards: [],
+    color: "#000000",
+  };
 
-  test("Error for invalid credentials", () => {});
+  let TEST_CREDENTIALS;
+  let TEST_USERID;
 
-  test("Error for invalid id", () => {});
+  let testDocuments;
+
+  beforeAll(async () => {
+    testDocuments = await Utilities.mockUser(
+      {
+        email: "TESTABOB",
+        password: "1two3Four_flyya38480583yfklg",
+      },
+      {
+        loggedIn: true,
+        decks: [TEST_DECK],
+      }
+    );
+    TEST_CREDENTIALS = testDocuments[testDocuments.length - 1].id;
+    TEST_USERID = testDocuments[testDocuments.length - 2].id;
+    TEST_DECKID = testDocuments[testDocuments.length - 3].id;
+  });
+
+  afterAll(() => {
+    return Utilities.tearDown(testDocuments);
+  });
+
+  test("POST /deck/:id/delete responds with success", async () => {
+    const response = await request(app)
+      .post(`/deck/${TEST_DECKID}/delete`)
+      .set("authorization", `${TEST_CREDENTIALS}`);
+
+    expect(response.statusCode).toBe(200);
+    expect(await Utilities.getDeck(TEST_DECKID)).toBe(null);
+    const user = await Utilities.getUser(TEST_USERID);
+    expect(user?.decks).toStrictEqual([]);
+  });
+
+  test("Error for invalid credentials", () => {
+    return request(app)
+      .post(`/deck/${TEST_DECKID}/delete`)
+      .then((response) => {
+        expect(response.statusCode).toBe(403);
+        expect(response.body.errorMessage).toBe(
+          DECKERRORS.AUTH.UNAUTHORIZED.errorMessage
+        );
+      });
+  });
+
+  test("Error for invalid id", () => {
+    const BAD_ID = "foobar";
+    return request(app)
+      .post(`/deck/${BAD_ID}/delete`)
+      .set("authorization", `${TEST_CREDENTIALS}`)
+      .then((response) => {
+        expect(response.statusCode).toBe(400);
+        expect(response.body.errorMessage).toBe(
+          DECKERRORS.DELETE.DECK_NOT_FOUND.errorMessage
+        );
+      });
+  });
 });

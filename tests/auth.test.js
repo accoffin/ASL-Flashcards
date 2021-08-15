@@ -7,7 +7,7 @@ const Utilities = require("./TestUtilities");
 describe("Test the signup route", () => {
   const TEST_USER = {
     email: "TESTABOB1",
-    password: "1two3Four_flyya38480583yfklg"
+    password: "1two3Four_flyya38480583yfklg",
   };
 
   const testUserDocuments = [];
@@ -34,9 +34,9 @@ describe("Test the signup route", () => {
         expect(firstDeck.color).toBeDefined();
         expect(user.currentMode).toBe("receptive");
         testUserDocuments.push(
-          {type: "user", id: user._id}, 
-          {type: "session", id: session._id},
-          {type: "deck", id: firstDeck._id},
+          { type: "user", id: user._id },
+          { type: "session", id: session._id },
+          { type: "deck", id: firstDeck._id }
         );
       });
   });
@@ -105,19 +105,21 @@ describe("Test the login route", () => {
   let TEST_USER;
 
   beforeAll(async () => {
-    TEST_USER = await Utilities.mockUser({
-      email: TEST_EMAIL,
-      password: TEST_PASSWORD
-    },
-    {
-      decks: [
-        {
-          name: "First Deck!",
-          color: "#000000",
-          cards: [TEST_CARD]
-        }
-      ]
-    });
+    TEST_USER = await Utilities.mockUser(
+      {
+        email: TEST_EMAIL,
+        password: TEST_PASSWORD,
+      },
+      {
+        decks: [
+          {
+            name: "First Deck!",
+            color: "#000000",
+            cards: [TEST_CARD],
+          },
+        ],
+      }
+    );
   });
 
   afterAll(() => {
@@ -145,7 +147,7 @@ describe("Test the login route", () => {
     expect(cardInDeck.gloss).toBeDefined();
     expect(cardInDeck.gif).toBeDefined();
     expect(Object.keys(cardInDeck).length).toBe(3);
-    TEST_USER.push({type: "session", id: firstSession._id});
+    TEST_USER.push({ type: "session", id: firstSession._id });
 
     const didSessionRecycleResponse = await request(app)
       .post("/auth/login")
@@ -204,15 +206,15 @@ describe("Test the logout route", () => {
   const TEST_EMAIL = "TESTABOB3";
   const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
 
-  let TEST_SESSION
+  let TEST_SESSION;
   let TEST_USER;
 
   beforeAll(async () => {
     TEST_USER = await Utilities.mockUser(
       {
         email: TEST_EMAIL,
-        password: TEST_PASSWORD
-      }, 
+        password: TEST_PASSWORD,
+      },
       { loggedIn: true }
     );
     TEST_SESSION = TEST_USER[TEST_USER.length - 1].id;
@@ -222,13 +224,13 @@ describe("Test the logout route", () => {
     Utilities.tearDown(TEST_USER);
   });
 
-  test("POST /auth/logout responds with success", () => {
-    return request(app)
+  test("POST /auth/logout responds with success", async () => {
+    const response = await request(app)
       .post("/auth/logout")
-      .set("authorization", `${TEST_SESSION}`)
-      .then((response) => {
-        expect(response.statusCode).toBe(200);
-      });
+      .set("authorization", `${TEST_SESSION}`);
+
+    expect(response.statusCode).toBe(200);
+    expect(await Utilities.getSession(TEST_SESSION)).toBe(null);
   });
 
   test("Error when header has no authorization", () => {
