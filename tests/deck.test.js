@@ -2,6 +2,7 @@ const request = require("supertest");
 const app = require("../app");
 
 const DECKERRORS = require("../errors/deck.errors");
+const { get } = require("../routes");
 const Utilities = require("./TestUtilities");
 
 // ok, so... the current deck is pulled in initially as part of the user data
@@ -88,11 +89,84 @@ describe("Test deck creation", () => {
 });
 
 describe("Test individual deck retrieval", () => {
-  test("GET /deck/:id responds with glosses/gifs for each card in the deck", () => {});
+  const TEST_CARDS = [
+    { gloss: "TEST", gif: "TEST" },
+    { gloss: "BLUE", gif: "BLUE" },
+  ];
+  const TEST_DECK = (TEST_DECK_DIFFERENT_USER = {
+    name: "TEST",
+    cards: TEST_CARDS,
+    color: "#000000",
+  });
 
-  test("Error for invalid credentials", () => {});
+  let TEST_CREDENTIALS, TEST_USERID, TEST_DECKID, TEST_DIFFERENT_DECKID;
 
-  test("Error for invalid id", () => {});
+  let testDocuments;
+
+  beforeAll(async () => {
+    testDocuments = await Utilities.mockUser(
+      { email: "TEST", password: "1two3Four_flyya38480583yfklg" },
+      { loggedIn: true, decks: [TEST_DECK] }
+    );
+    TEST_CREDENTIALS = testDocuments[testDocuments.length - 1].id;
+    TEST_USERID = testDocuments[testDocuments.length - 2].id;
+    TEST_DECKID = testDocuments[testDocuments.length - 3].id;
+
+    const differentUserDocuments = await Utilities.mockUser(
+      { email: "TESTY", password: "1two3Four_flyya38480583yfklg" },
+      { decks: [TEST_DECK_DIFFERENT_USER] }
+    );
+    TEST_DIFFERENT_DECKID =
+      differentUserDocuments[differentUserDocuments.length - 2].id;
+    testDocuments.push(...differentUserDocuments);
+  });
+
+  afterAll(() => {
+    return Utilities.tearDown(testDocuments);
+  });
+
+  test("GET /deck/:id responds with glosses/gifs for each card in the deck", async () => {
+    const response = await request(app)
+      .get(`/deck/${TEST_DECKID}`)
+      .set("authorization", `${TEST_CREDENTIALS}`);
+    expect(response.statusCode).toBe(200);
+    const cardInDeck = response.body[1];
+    expect(cardInDeck?.gloss).toBeDefined();
+    expect(cardInDeck?.gif).toBeDefined;
+    expect(Object.keys(cardInDeck).length).toBe(2);
+    expect(response.body).toStrictEqual(TEST_CARDS);
+  });
+
+  test("Error for invalid credentials", () => {
+    return request(app)
+      .post(`/deck/${TEST_DECKID}/delete`)
+      .then((response) => {
+        expect(response.statusCode).toBe(403);
+        expect(response.body.errorMessage).toBe(
+          DECKERRORS.AUTH.UNAUTHORIZED.errorMessage
+        );
+      });
+  });
+
+  test("Error for invalid id", async () => {
+    //does not access a different user's deck
+    const response = await request(app)
+      .get(`/deck/${TEST_DIFFERENT_DECKID}`)
+      .set("authorization", `${TEST_CREDENTIALS}`);
+    expect(response.statusCode).toBe(400);
+    expect(response.body.errorMessage).toBe(
+      DECKERRORS.GET.DECK_NOT_FOUND.errorMessage
+    );
+    //handles malformed id
+    const malformedId = "DEADBEEF";
+    const malformedResponse = await request(app)
+      .get(`/deck/${malformedId}`)
+      .set("authorization", `${TEST_CREDENTIALS}`);
+    expect(malformedResponse.statusCode).toBe(400);
+    expect(response.body.errorMessage).toBe(
+      DECKERRORS.GET.DECK_NOT_FOUND.errorMessage
+    );
+  });
 });
 
 describe("Test deck updating", () => {
@@ -107,14 +181,13 @@ describe("Test deck updating", () => {
 });
 
 describe("Test deck deletion", () => {
-  const TEST_DECK = {
+  const TEST_DECK = (TEST_DECK_DIFFERENT_USER = {
     name: "TEST",
     cards: [],
     color: "#000000",
-  };
+  });
 
-  let TEST_CREDENTIALS;
-  let TEST_USERID;
+  let TEST_CREDENTIALS, TEST_USERID, TEST_DECKID, TEST_DIFFERENT_DECKID;
 
   let testDocuments;
 
@@ -124,14 +197,19 @@ describe("Test deck deletion", () => {
         email: "TESTABOB",
         password: "1two3Four_flyya38480583yfklg",
       },
-      {
-        loggedIn: true,
-        decks: [TEST_DECK],
-      }
+      { loggedIn: true, decks: [TEST_DECK] }
     );
     TEST_CREDENTIALS = testDocuments[testDocuments.length - 1].id;
     TEST_USERID = testDocuments[testDocuments.length - 2].id;
     TEST_DECKID = testDocuments[testDocuments.length - 3].id;
+
+    const differentUserDocuments = await Utilities.mockUser(
+      { email: "TESTY", password: "1two3Four_flyya38480583yfklg" },
+      { decks: [TEST_DECK_DIFFERENT_USER] }
+    );
+    TEST_DIFFERENT_DECKID =
+      differentUserDocuments[differentUserDocuments.length - 2].id;
+    testDocuments.push(...differentUserDocuments);
   });
 
   afterAll(() => {
@@ -160,9 +238,18 @@ describe("Test deck deletion", () => {
       });
   });
 
-  test("Error for invalid id", () => {
+  test("Error for invalid id", async () => {
+    //does not access a different user's deck
+    const response = await request(app)
+      .get(`/deck/${TEST_DIFFERENT_DECKID}/delete`)
+      .set("authorization", `${TEST_CREDENTIALS}`);
+    expect(response.statusCode).toBe(400);
+    expect(response.body.errorMessage).toBe(
+      DECKERRORS.DELETE.DECK_NOT_FOUND.errorMessage
+    );
+    //handles malformed id
     const BAD_ID = "foobar";
-    return request(app)
+    await request(app)
       .post(`/deck/${BAD_ID}/delete`)
       .set("authorization", `${TEST_CREDENTIALS}`)
       .then((response) => {

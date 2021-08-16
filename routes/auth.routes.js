@@ -61,7 +61,7 @@ router.post("/signup", async (req, res) => {
           if (error instanceof mongoose.Error.ValidationError) {
             return res.status(400).json({ errorMessage: error.message });
           } else if (error.code === 11000) {
-            return res.status(400).json({ errorMessage: error.message});
+            return res.status(400).json({ errorMessage: error.message });
           } else return res.status(500).json({ errorMessage: error.message });
         });
   });
@@ -90,7 +90,16 @@ router.post("/login", (req, res) => {
         bcrypt.compare(password, user.passhash).then((isSamePassword) => {
           if (!isSamePassword) {
             return res.status(400).json(ERRORS.LOGIN.INCORRECT_PASSWORD);
-          } else login(res, user);
+          } else {
+            const userData = JSON.parse(JSON.stringify(user));
+            const cardsGlossGifOnly = userData.currentDeck.cards.map((card) => {
+              const { gloss, gif } = card;
+              return { gloss, gif };
+            });
+            userData.currentDeck.cards = cardsGlossGifOnly;
+
+            login(res, userData);
+          }
         });
       });
   }
@@ -119,7 +128,6 @@ function login(res, user) {
         expires: Date.now() + SESSION_EXPIRATION,
       })
         .then((newSession) => {
-          // console.log("Session created:", newSession);
           return res.status(201).json({ session: newSession, user: user });
         })
         .catch((error) => {

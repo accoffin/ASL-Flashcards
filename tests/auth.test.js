@@ -146,7 +146,7 @@ describe("Test the login route", () => {
     const cardInDeck = currentDeck.cards[0];
     expect(cardInDeck.gloss).toBeDefined();
     expect(cardInDeck.gif).toBeDefined();
-    expect(Object.keys(cardInDeck).length).toBe(3);
+    expect(Object.keys(cardInDeck).length).toBe(2);
     TEST_USER.push({ type: "session", id: firstSession._id });
 
     const didSessionRecycleResponse = await request(app)

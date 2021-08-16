@@ -13,16 +13,6 @@ const MODELS = {
   CARD: "card",
 };
 
-const OPTIONS = {
-  USER: {
-    LOGGED_IN: "loggedIn",
-    DECKS: "decks",
-  },
-  DECK: {
-    CARDS: "cards",
-  },
-};
-
 const SESSION_EXPIRATION = 1000 * 60 * 30; //Sessions live for 30 minutes
 
 const createCard = (card) => {
@@ -30,10 +20,9 @@ const createCard = (card) => {
   return idCollection;
 };
 
-const createDeck = async (deck, options) => {
+const createDeck = async (deck, { cards }) => {
   const idCollection = [];
-  if (options[OPTIONS.DECK.CARDS]) {
-    const cards = options[OPTIONS.DECK.CARDS];
+  if (cards) {
     const cardIds = [];
     for (const card of cards) {
       await Flashcard.create(card)
@@ -57,18 +46,14 @@ const createDeck = async (deck, options) => {
   return idCollection;
 };
 
-const createUser = async (user, options) => {
+const createUser = async (user, { loggedIn, decks }) => {
   const idCollection = [];
 
-  if (options[OPTIONS.USER.DECKS]) {
-    const decks = options[OPTIONS.USER.DECKS];
+  if (decks) {
     const deckIds = [];
     for (const deck of decks) {
       const { name, color, cards } = deck;
-      const deckDocuments = await createDeck(
-        { name, color },
-        { [OPTIONS.DECK.CARDS]: cards }
-      );
+      const deckDocuments = await createDeck({ name, color }, { cards });
       const deckItself = deckDocuments[deckDocuments.length - 1];
       if (deckItself?.type === MODELS.DECK) deckIds.push(deckItself.id);
       idCollection.push(...deckDocuments);
@@ -88,7 +73,7 @@ const createUser = async (user, options) => {
     .catch(() => {
       console.log("Warning: unable to create test user");
     });
-  if (options[OPTIONS.USER.LOGGED_IN]) {
+  if (loggedIn) {
     await Session.create({
       user: newUser?._id,
       expires: Date.now() + SESSION_EXPIRATION,
