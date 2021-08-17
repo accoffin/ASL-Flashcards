@@ -14,6 +14,8 @@ const Flashcard = require("../models/Flashcard.model");
 
 const ERRORS = require("../errors/auth.errors");
 
+const { mailTransporter, confirmationEmail } = require("../config/email");
+
 router.post("/signup", async (req, res) => {
   const { email, password, isAdmin } = req.body;
 
@@ -54,7 +56,8 @@ router.post("/signup", async (req, res) => {
           const { deck, user } = deckAndUser;
           deck.cards = [];
           user.currentDeck = deck;
-          user.decks[0] = deck;
+          user.decks[0] = deck
+          mailTransporter.sendMail(confirmationEmail(user._id, user.email))
           login(res, user);
         })
         .catch((error) => {
