@@ -8,6 +8,9 @@ module.exports = {
   GET: {
     DECK_NOT_FOUND: { errorMessage: "Deck not found." },
   },
+  UPDATE: {
+    DECK_NOT_FOUND: { errorMessage: "Deck update failed. Id provided does not exist." }
+  },
   DELETE: {
     DECK_NOT_FOUND: {
       errorMessage: "Deck deletion failed. Id provided does not exist.",

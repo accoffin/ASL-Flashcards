@@ -17,6 +17,7 @@ describe("Test the signup route", () => {
   });
 
   test("POST /auth/signup responds with user data and session", () => {
+    //signup also sends a confirmation email to the provided address
     return request(app)
       .post("/auth/signup")
       .send(TEST_USER)
