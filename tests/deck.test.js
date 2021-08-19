@@ -169,23 +169,47 @@ describe("Test individual deck retrieval", () => {
 });
 
 describe("Test deck updating", () => {
-  const TEST_DECK = TEST_DECK_DIFFERENT_USER = {
+  const TEST_DECK = (TEST_DECK_DIFFERENT_USER = {
     name: "TEST",
-    cards: [],
+    cards: [
+      { gloss: "RED", gif: "red", category: "colors" },
+      { gloss: "BLUE", gif: "blue", category: "colors" },
+      { gloss: "GREEN", gif: "green", category: "colors" },
+      { gloss: "YELLOW", gif: "yellow", category: "colors" },
+      { gloss: "BLACK", gif: "black", category: "colors" },
+      { gloss: "PURPLE", gif: "purple", category: "colors" },
+    ],
     color: "#000000",
-  };
+  });
 
-
-  const UPDATE = {
+  const INPUT = {
     NAME_ONLY: { name: "NEW_NAME" },
     COLOR_ONLY: { color: "NEW_COLOR" },
     NAME_AND_COLOR: { name: "NAME", color: "COLOR" },
-    ADD_CARDS: {},
-    REMOVE_CARDS: {},
-    ADD_AND_REMOVE_CARDS: {},
+    REMOVE_CARDS: { remove: null },
+    ADD_CARDS: { add: null },
+    ADD_AND_REMOVE_CARDS: { add: null, remove: null },
+    ADD_BAD_ID: { add: ["DEADBEEF"] },
+    ADD_CARD_ALREADY_PRESENT: { add: null },
+    REMOVE_BAD_ID: { remove: ["DEADBEEF"] },
+    REMOVE_CARD_NOT_FOUND: { remove: null },
   };
+  function setInputCards(cardIds) {
+    INPUT.REMOVE_CARDS.remove = [cardIds[0], cardIds[2], cardIds[4]];
+    INPUT.ADD_CARDS.add = [cardIds[4], cardIds[2], cardIds[0]];
+    INPUT.ADD_AND_REMOVE_CARDS.remove = cardIds;
+    INPUT.ADD_AND_REMOVE_CARDS.add = [cardIds[0], cardIds[1]];
 
-  let TEST_CREDENTIALS, TEST_USERID, TEST_DECKID, TEST_DIFFERENT_DECKID;
+    INPUT.ADD_CARD_ALREADY_PRESENT.add = [cardIds[0]];
+    INPUT.REMOVE_CARD_NOT_FOUND.remove = [cardIds[2]];
+  }
+
+  let TEST_CREDENTIALS,
+    TEST_USERID,
+    TEST_DECKID,
+    TEST_CARDIDS,
+    TEST_DIFFERENT_DECKID,
+    TEST_DESTROY_CARD;
 
   let testDocuments;
 
@@ -197,9 +221,11 @@ describe("Test deck updating", () => {
       },
       { loggedIn: true, decks: [TEST_DECK] }
     );
-    TEST_CREDENTIALS = testDocuments[testDocuments.length - 1].id;
-    TEST_USERID = testDocuments[testDocuments.length - 2].id;
-    TEST_DECKID = testDocuments[testDocuments.length - 3].id;
+    TEST_DESTROY_CARD = testDocuments[testDocuments.length - 4];
+    [TEST_CREDENTIALS, TEST_USERID, TEST_DECKID, ...TEST_CARDIDS] =
+      testDocuments.reverse().map((doc) => doc.id);
+
+    setInputCards(TEST_CARDIDS);
 
     const differentUserDocuments = await Utilities.mockUser(
       { email: "TESTY", password: "1two3Four_flyya38480583yfklg" },
@@ -207,16 +233,67 @@ describe("Test deck updating", () => {
     );
     TEST_DIFFERENT_DECKID =
       differentUserDocuments[differentUserDocuments.length - 2].id;
+
     testDocuments.push(...differentUserDocuments);
   });
 
   afterAll(() => {
     return Utilities.tearDown(testDocuments);
-  })
+  });
 
   test("POST /deck/:id/update responds with success", async () => {
-    //send changes (not the whole deck)
-    //contains card ids added and removed
+    const updateName = await send(INPUT.NAME_ONLY);
+    //add expectations
+
+    const updateColor = await send(INPUT.COLOR_ONLY);
+    //add expectations
+
+    const updateNameAndColor = await send(INPUT.NAME_AND_COLOR);
+    //add expectations
+
+    const addCards = await send(INPUT.ADD_CARDS);
+    //add expectations
+
+    const removeCards = await send(INPUT.REMOVE_CARDS);
+    //add expectations
+
+    const addAndRemoveCards = await send(addAndRemoveCards);
+    //add expectations
+
+    function send(input) {
+      return request(app)
+        .post(`/deck/${TEST_DECKID}/update`)
+        .set("authorization", `${TEST_CREDENTIALS}`)
+        .send(input);
+    }
+  });
+
+  test("Error for invalid card id", async () => {
+    const removeBadId = await send(INPUT.REMOVE_BAD_ID);
+    //add expectations
+
+    const removeAbsentId = await send(INPUT.REMOVE_CARD_NOT_FOUND);
+    //add expectations
+
+    const addBadId = await send(INPUT.ADD_BAD_ID);
+    //add expectations
+
+    const addDuplicateId = await send(INPUT.ADD_CARD_ALREADY_PRESENT);
+    //add expectations
+
+    //remove a card from the db
+    const nonExistentCardID = TEST_DESTROY_CARD.id;
+    await Utilities.tearDown([TEST_DESTROY_CARD]);
+
+    const addNonExistentId = await send({ add: [nonExistentCardID] });
+    //add expectations
+
+    function send(input) {
+      return request(app)
+        .post(`/deck/${TEST_DECKID}/update`)
+        .set("authorization", `${TEST_CREDENTIALS}`)
+        .send(input);
+    }
   });
 
   test("Error for invalid credentials", () => {
@@ -230,7 +307,7 @@ describe("Test deck updating", () => {
       });
   });
 
-  test("Error for invalid id", () => {
+  test("Error for invalid deck id", async () => {
     //does not access a different user's deck
     const response = await request(app)
       .post(`/deck/${TEST_DIFFERENT_DECKID}/update`)
@@ -249,7 +326,8 @@ describe("Test deck updating", () => {
         expect(response.body.errorMessage).toBe(
           DECKERRORS.UPDATE.DECK_NOT_FOUND.errorMessage
         );
-      });});
+      });
+  });
 });
 
 describe("Test deck deletion", () => {
