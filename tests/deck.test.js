@@ -257,7 +257,7 @@ describe("Test deck updating", () => {
     const removeCards = await send(INPUT.REMOVE_CARDS);
     //add expectations
 
-    const addAndRemoveCards = await send(addAndRemoveCards);
+    const addAndRemoveCards = await send(INPUT.ADD_AND_REMOVE_CARDS);
     //add expectations
 
     function send(input) {
