@@ -57,7 +57,9 @@ router.post("/signup", async (req, res) => {
           deck.cards = [];
           user.currentDeck = deck;
           user.decks[0] = deck
-          mailTransporter.sendMail(confirmationEmail(user._id, user.email))
+          mailTransporter.sendMail(confirmationEmail(user._id, user.email)).catch(error => {
+            console.log("Failed to send confirmation email: ", error);
+          })
           login(res, user);
         })
         .catch((error) => {

@@ -156,7 +156,6 @@ describe("Test individual deck retrieval", () => {
     expect(response.body.errorMessage).toBe(
       DECKERRORS.GET.DECK_NOT_FOUND.errorMessage
     );
-    //handles malformed id
     const malformedId = "DEADBEEF";
     const malformedResponse = await request(app)
       .get(`/deck/${malformedId}`)
@@ -189,9 +188,7 @@ describe("Test deck updating", () => {
     REMOVE_CARDS: { remove: null },
     ADD_CARDS: { add: null },
     ADD_AND_REMOVE_CARDS: { add: null, remove: null },
-    ADD_BAD_ID: { add: ["DEADBEEF"] },
     ADD_CARD_ALREADY_PRESENT: { add: null },
-    REMOVE_BAD_ID: { remove: ["DEADBEEF"] },
     REMOVE_CARD_NOT_FOUND: { remove: null },
   };
   function setInputCards(cardIds) {
@@ -242,23 +239,44 @@ describe("Test deck updating", () => {
   });
 
   test("POST /deck/:id/update responds with success", async () => {
+    let postUpdate; 
     const updateName = await send(INPUT.NAME_ONLY);
-    //add expectations
+    postUpdate = await Utilities.getDeck(TEST_DECKID);
+    expect(updateName.statusCode).toBe(200);
+    expect(postUpdate.name).toBe(INPUT.NAME_ONLY.name);
 
     const updateColor = await send(INPUT.COLOR_ONLY);
-    //add expectations
+    postUpdate = await Utilities.getDeck(TEST_DECKID);
+    expect(updateColor.statusCode).toBe(200);
+    expect(postUpdate.color).toBe(INPUT.COLOR_ONLY.color);
 
     const updateNameAndColor = await send(INPUT.NAME_AND_COLOR);
-    //add expectations
-
-    const addCards = await send(INPUT.ADD_CARDS);
-    //add expectations
+    postUpdate = await Utilities.getDeck(TEST_DECKID);
+    expect(updateNameAndColor.statusCode).toBe(200);
+    expect(postUpdate.name).toBe(INPUT.NAME_AND_COLOR.name);
+    expect(postUpdate.color).toBe(INPUT.NAME_AND_COLOR.color);
 
     const removeCards = await send(INPUT.REMOVE_CARDS);
-    //add expectations
+    postUpdate = await Utilities.getDeck(TEST_DECKID);
+    expect(removeCards.statusCode).toBe(200);
+    expect(postUpdate.cards).toStrictEqual([TEST_CARDIDS[1], TEST_CARDIDS[3], TEST_CARDIDS[5]]);
+    
+    const addCards = await send(INPUT.ADD_CARDS);
+    postUpdate = await Utilities.getDeck(TEST_DECKID);
+    expect(addCards.statusCode).toBe(200);
+    expect(postUpdate.cards).toStrictEqual([
+      TEST_CARDIDS[1], 
+      TEST_CARDIDS[3], 
+      TEST_CARDIDS[5],
+      TEST_CARDIDS[4],
+      TEST_CARDIDS[2],
+      TEST_CARDIDS[0],
+    ]);
 
     const addAndRemoveCards = await send(INPUT.ADD_AND_REMOVE_CARDS);
-    //add expectations
+    postUpdate = await Utilities.getDeck(TEST_DECKID);
+    expect(addAndRemoveCards.statusCode).toBe(200);
+    expect(postUpdate.cards).toStrictEqual([TEST_CARDIDS[0], TEST_CARDIDS[1]]);
 
     function send(input) {
       return request(app)
@@ -269,24 +287,21 @@ describe("Test deck updating", () => {
   });
 
   test("Error for invalid card id", async () => {
-    const removeBadId = await send(INPUT.REMOVE_BAD_ID);
-    //add expectations
-
     const removeAbsentId = await send(INPUT.REMOVE_CARD_NOT_FOUND);
-    //add expectations
-
-    const addBadId = await send(INPUT.ADD_BAD_ID);
-    //add expectations
+    expect(removeAbsentId.statusCode).toBe(400);
+    expect(removeAbsentId.body.errorMessage).toBe(DECKERRORS.REMOVE_ABSENT_CARD.errorMessage);
 
     const addDuplicateId = await send(INPUT.ADD_CARD_ALREADY_PRESENT);
-    //add expectations
+    expect(addDuplicateId.statusCode).toBe(400);
+    expect(addDuplicateId.body.errorMessage).toBe(DECKERRORS.ADD_DUPLICATE_CARD.errorMessage);
 
     //remove a card from the db
     const nonExistentCardID = TEST_DESTROY_CARD.id;
     await Utilities.tearDown([TEST_DESTROY_CARD]);
 
     const addNonExistentId = await send({ add: [nonExistentCardID] });
-    //add expectations
+    expect(addNonExistentId.statusCode).toBe(400);
+    expect(addNonExistentId.body.errorMessage).toBe(DECKERRORS.ADD_NONEXISTENT_CARD.errorMessage);
 
     function send(input) {
       return request(app)
@@ -316,7 +331,6 @@ describe("Test deck updating", () => {
     expect(response.body.errorMessage).toBe(
       DECKERRORS.UPDATE.DECK_NOT_FOUND.errorMessage
     );
-    //handles malformed id
     const BAD_ID = "foobar";
     await request(app)
       .post(`/deck/${BAD_ID}/update`)
