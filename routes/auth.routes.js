@@ -14,6 +14,8 @@ const Flashcard = require("../models/Flashcard.model");
 
 const ERRORS = require("../errors/auth.errors");
 
+const { mailTransporter, confirmationEmail } = require("../config/email");
+
 router.post("/signup", async (req, res) => {
   const { email, password, isAdmin } = req.body;
 
@@ -54,13 +56,17 @@ router.post("/signup", async (req, res) => {
           const { deck, user } = deckAndUser;
           deck.cards = [];
           user.currentDeck = deck;
+          user.decks[0] = deck
+          mailTransporter.sendMail(confirmationEmail(user._id, user.email)).catch(error => {
+            console.log("Failed to send confirmation email: ", error);
+          })
           login(res, user);
         })
         .catch((error) => {
           if (error instanceof mongoose.Error.ValidationError) {
             return res.status(400).json({ errorMessage: error.message });
           } else if (error.code === 11000) {
-            return res.status(400).json({ errorMessage: error.message});
+            return res.status(400).json({ errorMessage: error.message });
           } else return res.status(500).json({ errorMessage: error.message });
         });
   });
@@ -80,6 +86,7 @@ router.post("/login", (req, res) => {
           select: "gloss gif",
         },
       })
+      .populate("decks")
       .then((user) => {
         if (!user) {
           return res.status(400).json(ERRORS.LOGIN.EMAIL_NOT_FOUND);
@@ -88,7 +95,16 @@ router.post("/login", (req, res) => {
         bcrypt.compare(password, user.passhash).then((isSamePassword) => {
           if (!isSamePassword) {
             return res.status(400).json(ERRORS.LOGIN.INCORRECT_PASSWORD);
-          } else login(res, user);
+          } else {
+            const userData = JSON.parse(JSON.stringify(user));
+            const cardsGlossGifOnly = userData.currentDeck.cards.map((card) => {
+              const { gloss, gif } = card;
+              return { gloss, gif };
+            });
+            userData.currentDeck.cards = cardsGlossGifOnly;
+
+            login(res, userData);
+          }
         });
       });
   }
@@ -117,7 +133,6 @@ function login(res, user) {
         expires: Date.now() + SESSION_EXPIRATION,
       })
         .then((newSession) => {
-          // console.log("Session created:", newSession);
           return res.status(201).json({ session: newSession, user: user });
         })
         .catch((error) => {
@@ -130,7 +145,7 @@ function login(res, user) {
       session.expires = Date.now() + SESSION_EXPIRATION;
       session
         .save()
-        .then(() => res.status(201).json({ session: session, user: user }))
+        .then(() => res.status(200).json({ session: session, user: user }))
         .catch((error) => {
           console.log(error);
           return res
