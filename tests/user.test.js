@@ -98,15 +98,26 @@ describe("Test user update routes", () => {
       //current mode change
   });
 
-  //error for invalid credentials
+  test("Error for invalid credentials", () => {
+    return request(app)
+      .post(`/user/${TEST_USERID}/update`)
+      .then((response) => {
+        expect(response.statusCode).toBe(403);
+        expect(response.body.errorMessage).toBe(
+          DECKERRORS.AUTH.UNAUTHORIZED.errorMessage
+        );
+      });
+  });
 
   //error for bad id
 
   //does not access a diferent user
 
   //error for invalid mode
+    //not expressive or receptive
 
   //error for invalid deck
+    //not in user decks
 
 });
 
