@@ -58,10 +58,14 @@ describe("Test user update routes", () => {
     category: "common phrases",
   };
 
-  let INPUT;
+  let INPUT = {
+    CURRENT_DECK: { currentDeck: null },
+    CURRENT_MODE: { currentMode: "expressive" },
+    CURRENT_DECK_AND_MODE: { currentDeck: null, currentMode: "receptive" },
+  };
 
   let TEST_USER;
-  let TEST_CREDENTIALS, TEST_USERID;
+  let TEST_CREDENTIALS, TEST_USERID, TEST_FIRSTDECKID, TEST_SECONDDECKID;
 
   beforeAll(async () => {
     TEST_USER = await Utilities.mockUser(
@@ -77,11 +81,18 @@ describe("Test user update routes", () => {
             color: "#000000",
             cards: [TEST_CARD],
           },
+          {
+            name: "Second Deck!",
+            color: "#000000",
+            cards: [TEST_CARD],
+          },
         ],
       }
     );
     TEST_CREDENTIALS = TEST_USER[TEST_USER.length - 1].id;
-    TEST_USERID = TEST_USER[TEST_USER.length - 2].id;
+    TEST_USERID = TEST_USER[4].id;
+    INPUT.CURRENT_DECK_AND_MODE.currentDeck = TEST_FIRSTDECKID = TEST_USER[3].id;
+    INPUT.CURRENT_DECK.currentDeck = TEST_SECONDDECKID = TEST_USER[1].id;
   });
 
 
@@ -90,12 +101,31 @@ describe("Test user update routes", () => {
   });
 
   test("POST /user/:id/update responds with success", async () => {
-    const currentDeckRequest = await request(app)
-      .post(`/user/${TEST_USERID}/update`)
-      .set("authorization", `${TEST_CREDENTIALS}`)
-      .send(INPUT);
-      //current deck change
-      //current mode change
+    let postUpdate;
+    const updateCurrentDeck = await send(INPUT.CURRENT_DECK);
+    postUpdate = await Utilities.getUser(TEST_USERID);
+    expect(updateCurrentDeck.statusCode).toBe(200);
+    expect(postUpdate.currentDeck).toBe(INPUT.CURRENT_DECK.currentDeck);
+    expect(postUpdate.currentMode).toBe("receptive");
+
+    const updateCurrentMode = await send(INPUT.CURRENT_MODE);
+    postUpdate = await Utilities.getUser(TEST_USERID);
+    expect(updateCurrentMode.statusCode).toBe(200);
+    expect(postUpdate.currentMode).toBe(INPUT.CURRENT_MODE.currentMode);
+    expect(postUpdate.currentDeck).toBe(TEST_SECONDDECKID);
+    
+    const updateCurrentDeckAndMode = await send(INPUT.CURRENT_DECK_AND_MODE);
+    postUpdate = await Utilities.getUser(TEST_USERID);
+    expect(updateCurrentDeckAndMode.statusCode).toBe(200);
+    expect(postUpdate.currentDeck).toBe(INPUT.CURRENT_DECK_AND_MODE.currentDeck);
+    expect(postUpdate.currentMode).toBe(INPUT.CURRENT_DECK_AND_MODE.currentMode);
+
+      function send(input) {
+        return request(app)
+          .post(`/user/${TEST_DECKID}/update`)
+          .set("authorization", `${TEST_CREDENTIALS}`)
+          .send(input);
+      }
   });
 
   test("Error for invalid credentials", () => {

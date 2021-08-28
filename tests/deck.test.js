@@ -240,11 +240,13 @@ describe("Test deck updating", () => {
     postUpdate = await Utilities.getDeck(TEST_DECKID);
     expect(updateName.statusCode).toBe(200);
     expect(postUpdate.name).toBe(INPUT.NAME_ONLY.name);
+    expect(postUpdate.color).toBe("#000000");
 
     const updateColor = await send(INPUT.COLOR_ONLY);
     postUpdate = await Utilities.getDeck(TEST_DECKID);
     expect(updateColor.statusCode).toBe(200);
     expect(postUpdate.color).toBe(INPUT.COLOR_ONLY.color);
+    expect(postUpdate.name).toBe("NEW_NAME");
 
     const updateNameAndColor = await send(INPUT.NAME_AND_COLOR);
     postUpdate = await Utilities.getDeck(TEST_DECKID);
