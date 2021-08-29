@@ -5,7 +5,7 @@ const USERERRORS = require("../errors/user.errors");
 const Utilities = require("./TestUtilities");
 
 describe("Test user index routes", () => {
-  const TEST_EMAIL = "TESTABOB2";
+  const TEST_EMAIL = "USERTEST";
   const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
   const TEST_CARD = {
     gloss: "TEST",
@@ -40,17 +40,17 @@ describe("Test user index routes", () => {
     return Utilities.tearDown(TEST_USER);
   });
 
-  test("Email confirmation GET /user/:id?confirmation=true responds with success", () => {
-    return request(app)
-      .get(`/user/${TEST_USERID}?confirmation=true`)
-      .then((response) => {
-      });
+  test("Email confirmation GET /user/:id?confirmation=true responds with success", async () => {
+    const response = await request(app).get(`/user/${TEST_USERID}?confirmation=true`);
+    const postUpdate = await Utilities.getUser(TEST_USERID);
+    expect(response.statusCode).toBe(200);
+    expect(postUpdate.emailConfirmed).toBe(true);
   });
 
 });
 
 describe("Test user update routes", () => {
-  const TEST_EMAIL = "TESTABOB1";
+  const TEST_EMAIL = "USERTEST1";
   const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
   const TEST_CARD = {
     gloss: "TEST",
@@ -62,6 +62,8 @@ describe("Test user update routes", () => {
     CURRENT_DECK: { currentDeck: null },
     CURRENT_MODE: { currentMode: "expressive" },
     CURRENT_DECK_AND_MODE: { currentDeck: null, currentMode: "receptive" },
+    MODE_NOT_EXPRESSIVE_OR_RECEPTIVE: { currentMode: "asdfjkl;" },
+    DECKID_NOT_OWNED_BY_USER: { currentDeck: null },
   };
 
   let testDocuments;
@@ -96,7 +98,7 @@ describe("Test user update routes", () => {
 
     const secondUser = await Utilities.mockUser(
       {
-        email: "TESTABOB2",
+        email: "USERTEST2",
         password: TEST_PASSWORD,
       },
       {
@@ -110,6 +112,7 @@ describe("Test user update routes", () => {
       }
     );
     TEST_SECONDUSERID = secondUser[secondUser.length - 1].id;
+    INPUT.INVALID_DECK = secondUser[secondUser.length - 2].id;
     testDocuments.push(...secondUser);
   });
 
@@ -171,11 +174,30 @@ describe("Test user update routes", () => {
       });
   });
 
-  //error for invalid mode
-    //not expressive or receptive
+  test("Error for invalid mode", () => {
+    return request(app)
+      .post(`/user/${TEST_USERID}/update`)
+      .set("authorization", `${TEST_CREDENTIALS}`)
+      .send(INPUT.MODE_NOT_EXPRESSIVE_OR_RECEPTIVE)
+      .then((response) => {
+        expect(response.statusCode).toBe(400);
+        expect(response.body.errorMessage).toBe(
+          USERERRORS.UPDATE.INVALID_MODE.errorMessage
+        );
+      });
+  });
 
-  //error for invalid deck
-    //not in user decks
-
+  test("Error for invalid current deck", () => {
+    return request(app)
+      .post(`/user/${TEST_USERID}/update`)
+      .set("authorization", `${TEST_CREDENTIALS}`)
+      .send(INPUT.DECKID_NOT_OWNED_BY_USER)
+      .then((response) => {
+        expect(response.statusCode).toBe(400);
+        expect(response.body.errorMessage).toBe(
+          USERERRORS.UPDATE.INVALID_CURRENT_DECK.errorMessage
+        );
+      });
+  });
 });
 

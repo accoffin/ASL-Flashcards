@@ -17,7 +17,7 @@ describe("Test deck creation", () => {
   beforeAll(async () => {
     testDocuments = await Utilities.mockUser(
       {
-        email: "TESTABOB",
+        email: "DECKTEST",
         password: "1two3Four_flyya38480583yfklg",
       },
       { loggedIn: true }
@@ -100,7 +100,7 @@ describe("Test individual deck retrieval", () => {
 
   beforeAll(async () => {
     testDocuments = await Utilities.mockUser(
-      { email: "TEST", password: "1two3Four_flyya38480583yfklg" },
+      { email: "DECKTEST1", password: "1two3Four_flyya38480583yfklg" },
       { loggedIn: true, decks: [TEST_DECK] }
     );
     TEST_CREDENTIALS = testDocuments[testDocuments.length - 1].id;
@@ -108,7 +108,7 @@ describe("Test individual deck retrieval", () => {
     TEST_DECKID = testDocuments[testDocuments.length - 3].id;
 
     const differentUserDocuments = await Utilities.mockUser(
-      { email: "TESTY", password: "1two3Four_flyya38480583yfklg" },
+      { email: "DECKTEST2", password: "1two3Four_flyya38480583yfklg" },
       { decks: [TEST_DECK_DIFFERENT_USER] }
     );
     TEST_DIFFERENT_DECKID =
@@ -209,7 +209,7 @@ describe("Test deck updating", () => {
   beforeAll(async () => {
     testDocuments = await Utilities.mockUser(
       {
-        email: "TESTABOB",
+        email: "TESTDECK3",
         password: "1two3Four_flyya38480583yfklg",
       },
       { loggedIn: true, decks: [TEST_DECK] }
@@ -221,7 +221,7 @@ describe("Test deck updating", () => {
     setInputCards(TEST_CARDIDS);
 
     const differentUserDocuments = await Utilities.mockUser(
-      { email: "TESTY", password: "1two3Four_flyya38480583yfklg" },
+      { email: "TESTDECK4", password: "1two3Four_flyya38480583yfklg" },
       { decks: [TEST_DECK_DIFFERENT_USER] }
     );
     TEST_DIFFERENT_DECKID =
@@ -344,7 +344,7 @@ describe("Test deck updating", () => {
 
 describe("Test deck deletion", () => {
   const TEST_DECK = (TEST_DECK_DIFFERENT_USER = {
-    name: "TEST",
+    name: "TESTDECK5",
     cards: [],
     color: "#000000",
   });

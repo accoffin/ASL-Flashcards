@@ -6,7 +6,7 @@ const Utilities = require("./TestUtilities");
 
 describe("Test the signup route", () => {
   const TEST_USER = {
-    email: "TESTABOB1",
+    email: "AUTHTEST",
     password: "1two3Four_flyya38480583yfklg",
   };
 
@@ -95,7 +95,7 @@ describe("Test the signup route", () => {
 });
 
 describe("Test the login route", () => {
-  const TEST_EMAIL = "TESTABOB2";
+  const TEST_EMAIL = "AUTHTEST1";
   const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
   const TEST_CARD = {
     gloss: "TEST",
@@ -204,7 +204,7 @@ describe("Test the login route", () => {
 });
 
 describe("Test the logout route", () => {
-  const TEST_EMAIL = "TESTABOB3";
+  const TEST_EMAIL = "AUTHTEST2";
   const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
 
   let TEST_SESSION;
