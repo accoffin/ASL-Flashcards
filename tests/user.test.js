@@ -50,7 +50,7 @@ describe("Test user index routes", () => {
 });
 
 describe("Test user update routes", () => {
-  const TEST_EMAIL = "TESTABOB2";
+  const TEST_EMAIL = "TESTABOB1";
   const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
   const TEST_CARD = {
     gloss: "TEST",
@@ -64,11 +64,11 @@ describe("Test user update routes", () => {
     CURRENT_DECK_AND_MODE: { currentDeck: null, currentMode: "receptive" },
   };
 
-  let TEST_USER;
-  let TEST_CREDENTIALS, TEST_USERID, TEST_FIRSTDECKID, TEST_SECONDDECKID;
+  let testDocuments;
+  let TEST_CREDENTIALS, TEST_USERID, TEST_SECONDUSERID, TEST_FIRSTDECKID, TEST_SECONDDECKID;
 
   beforeAll(async () => {
-    TEST_USER = await Utilities.mockUser(
+    testDocuments = await Utilities.mockUser(
       {
         email: TEST_EMAIL,
         password: TEST_PASSWORD,
@@ -89,15 +89,33 @@ describe("Test user update routes", () => {
         ],
       }
     );
-    TEST_CREDENTIALS = TEST_USER[TEST_USER.length - 1].id;
-    TEST_USERID = TEST_USER[4].id;
-    INPUT.CURRENT_DECK_AND_MODE.currentDeck = TEST_FIRSTDECKID = TEST_USER[3].id;
-    INPUT.CURRENT_DECK.currentDeck = TEST_SECONDDECKID = TEST_USER[1].id;
+    TEST_CREDENTIALS = testDocuments[testDocuments.length - 1].id;
+    TEST_USERID = testDocuments[4].id;
+    INPUT.CURRENT_DECK_AND_MODE.currentDeck = TEST_FIRSTDECKID = testDocuments[3].id;
+    INPUT.CURRENT_DECK.currentDeck = TEST_SECONDDECKID = testDocuments[1].id;
+
+    const secondUser = await Utilities.mockUser(
+      {
+        email: "TESTABOB2",
+        password: TEST_PASSWORD,
+      },
+      {
+        decks: [
+          {
+            name: "First Deck!",
+            color: "#000000",
+            cards: [TEST_CARD],
+          },
+        ],
+      }
+    );
+    TEST_SECONDUSERID = secondUser[secondUser.length - 1].id;
+    testDocuments.push(...secondUser);
   });
 
 
   afterAll(() => {
-    return Utilities.tearDown(TEST_USER);
+    return Utilities.tearDown(testDocuments);
   });
 
   test("POST /user/:id/update responds with success", async () => {
@@ -122,7 +140,7 @@ describe("Test user update routes", () => {
 
       function send(input) {
         return request(app)
-          .post(`/user/${TEST_DECKID}/update`)
+          .post(`/user/${TEST_USERID}/update`)
           .set("authorization", `${TEST_CREDENTIALS}`)
           .send(input);
       }
@@ -131,17 +149,27 @@ describe("Test user update routes", () => {
   test("Error for invalid credentials", () => {
     return request(app)
       .post(`/user/${TEST_USERID}/update`)
+      .send({ currentMode: "expressive" })
       .then((response) => {
         expect(response.statusCode).toBe(403);
         expect(response.body.errorMessage).toBe(
-          DECKERRORS.AUTH.UNAUTHORIZED.errorMessage
+          USERERRORS.AUTH.UNAUTHORIZED.errorMessage
         );
       });
   });
 
-  //error for bad id
-
-  //does not access a diferent user
+  test("Error if invalid clearance to update user, or user is incorrect", () => {
+    return request(app)
+      .post(`/user/${TEST_SECONDUSERID}/update`)
+      .set("authorization", `${TEST_CREDENTIALS}`)
+      .send({ currentMode: "expressive" })
+      .then((response) => {
+        expect(response.statusCode).toBe(400);
+        expect(response.body.errorMessage).toBe(
+          USERERRORS.UPDATE.INVALID_USERID.errorMessage
+        );
+      });
+  });
 
   //error for invalid mode
     //not expressive or receptive
