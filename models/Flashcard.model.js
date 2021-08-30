@@ -4,7 +4,6 @@ const { Schema, model } = require("mongoose");
 const flashCardSchema = new Schema({
   gloss: { type: String, required: true },
   gif: { type: String, required: [true, "No URL for gif"] },
-  category: { type: String, enum: ["colors", "common phrases"] },
 });
 
 const Flashcard = model("Flashcard", flashCardSchema);
