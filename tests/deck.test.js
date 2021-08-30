@@ -127,12 +127,12 @@ describe("Test deck updating", () => {
   const TEST_DECK = (TEST_DECK_DIFFERENT_USER = {
     name: "TEST",
     cards: [
-      { gloss: "RED", gif: "red", category: "colors" },
-      { gloss: "BLUE", gif: "blue", category: "colors" },
-      { gloss: "GREEN", gif: "green", category: "colors" },
-      { gloss: "YELLOW", gif: "yellow", category: "colors" },
-      { gloss: "BLACK", gif: "black", category: "colors" },
-      { gloss: "PURPLE", gif: "purple", category: "colors" },
+      { gloss: "RED", gif: "red" },
+      { gloss: "BLUE", gif: "blue" },
+      { gloss: "GREEN", gif: "green" },
+      { gloss: "YELLOW", gif: "yellow" },
+      { gloss: "BLACK", gif: "black" },
+      { gloss: "PURPLE", gif: "purple" },
     ],
     color: "#000000",
   });
