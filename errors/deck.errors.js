@@ -16,7 +16,7 @@ module.exports = {
   },
   DELETE: {
     DECK_NOT_FOUND: {
-      errorMessage: "Deck deletion failed. Id provided does not exist.",
+      errorMessage: "Nonexistent deck cannot be deleted.",
     },
   },
 };

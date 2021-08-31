@@ -10,7 +10,7 @@ const mailTransporter = nodemailer.createTransport({
 
 const confirmationEmail = (id, email) => {
     return {
-        from: `Derek Noble <${process.env.HOST_EMAIL}>`,
+        from: `ASL Flashcards <${process.env.HOST_EMAIL}>`,
         to: `${email}`,
         subject: 'Let\'s keep in touch',
         html: `<body>

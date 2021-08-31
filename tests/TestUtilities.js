@@ -54,8 +54,8 @@ const createUser = async (user, { loggedIn, decks }) => {
     for (const deck of decks) {
       const { name, color, cards } = deck;
       const deckDocuments = await createDeck({ name, color }, { cards });
-      const deckItself = deckDocuments[deckDocuments.length - 1];
-      if (deckItself?.type === MODELS.DECK) deckIds.push(deckItself.id);
+      const deckDoc = deckDocuments[deckDocuments.length - 1];
+      if (deckDoc?.type === MODELS.DECK) deckIds.push(deckDoc.id);
       idCollection.push(...deckDocuments);
     }
     user.decks = deckIds;
@@ -100,7 +100,12 @@ const getDeck = async (id) => {
   return await Deck.findById(id).exec();
 };
 
+const getCards = async () => {
+  return await Flashcard.find().exec();
+};
+
 module.exports = {
+  getCards: getCards,
   getDeck: getDeck,
   getUser: getUser,
   getSession: getSession,

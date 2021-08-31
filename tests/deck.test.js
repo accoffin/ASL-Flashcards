@@ -4,14 +4,9 @@ const app = require("../app");
 const DECKERRORS = require("../errors/deck.errors");
 const Utilities = require("./TestUtilities");
 
-// ok, so... the current deck is pulled in initially as part of the user data
-// from login. But we need additional decks to be rendered if the user has
-// multiple decks to select from. Deck CRUD is mandatory, and READ always
-// has populated card data
 
 describe("Test deck creation", () => {
   const TEST_DECK = { name: "TEST" };
-  const TEST_DECK_SAME_NAME = { name: "TEST" };
 
   let TEST_CREDENTIALS;
   let TEST_USERID;
@@ -21,7 +16,7 @@ describe("Test deck creation", () => {
   beforeAll(async () => {
     testDocuments = await Utilities.mockUser(
       {
-        email: "TESTABOB",
+        email: "DECKTEST",
         password: "1two3Four_flyya38480583yfklg",
       },
       { loggedIn: true }
@@ -45,45 +40,6 @@ describe("Test deck creation", () => {
     expect(firstDeck?.name).toBe(TEST_DECK.name);
     expect(firstDeck?.cards).toStrictEqual([]);
     expect(firstDeck?.color).toBe("#000000");
-
-    const user = await Utilities.getUser(TEST_USERID);
-    const newestDeckId = user.decks[user.decks.length - 1];
-    expect(newestDeckId).toBe(firstDeck._id);
-
-    const sameTitlesHaveDifferentColorsResponse = await request(app)
-      .post("/deck/create")
-      .set("authorization", `${TEST_CREDENTIALS}`)
-      .send(TEST_DECK_SAME_NAME);
-    expect(sameTitlesHaveDifferentColorsResponse.statusCode).toBe(201);
-    const differentColorDeck = sameTitlesHaveDifferentColorsResponse.body;
-    testDocuments.push({ type: "deck", id: differentColorDeck?._id });
-    expect(differentColorDeck?.color).not.toBe(firstDeck?.color);
-  });
-
-  test("Error for invalid credentials", () => {
-    return request(app)
-      .post("/deck/create")
-      .set("authorization", `${TEST_CREDENTIALS}`)
-      .send(TEST_DECK)
-      .then((response) => {
-        expect(response.statusCode).toBe(403);
-        expect(response.body.errorMessage).toBe(
-          DECKERRORS.AUTH.UNAUTHORIZED.errorMessage
-        );
-      });
-  });
-
-  test("Error for missing title", () => {
-    return request(app)
-      .post("/deck/create")
-      .set("authorization", `${TEST_CREDENTIALS}`)
-      .send({})
-      .then((response) => {
-        expect(response.statusCode).toBe(400);
-        expect(response.body.errorMessage).toBe(
-          DECKERRORS.CREATE.MISSING_NAME.errorMessage
-        );
-      });
   });
 });
 
@@ -104,7 +60,7 @@ describe("Test individual deck retrieval", () => {
 
   beforeAll(async () => {
     testDocuments = await Utilities.mockUser(
-      { email: "TEST", password: "1two3Four_flyya38480583yfklg" },
+      { email: "DECKTEST1", password: "1two3Four_flyya38480583yfklg" },
       { loggedIn: true, decks: [TEST_DECK] }
     );
     TEST_CREDENTIALS = testDocuments[testDocuments.length - 1].id;
@@ -112,7 +68,7 @@ describe("Test individual deck retrieval", () => {
     TEST_DECKID = testDocuments[testDocuments.length - 3].id;
 
     const differentUserDocuments = await Utilities.mockUser(
-      { email: "TESTY", password: "1two3Four_flyya38480583yfklg" },
+      { email: "DECKTEST2", password: "1two3Four_flyya38480583yfklg" },
       { decks: [TEST_DECK_DIFFERENT_USER] }
     );
     TEST_DIFFERENT_DECKID =
@@ -171,12 +127,12 @@ describe("Test deck updating", () => {
   const TEST_DECK = (TEST_DECK_DIFFERENT_USER = {
     name: "TEST",
     cards: [
-      { gloss: "RED", gif: "red", category: "colors" },
-      { gloss: "BLUE", gif: "blue", category: "colors" },
-      { gloss: "GREEN", gif: "green", category: "colors" },
-      { gloss: "YELLOW", gif: "yellow", category: "colors" },
-      { gloss: "BLACK", gif: "black", category: "colors" },
-      { gloss: "PURPLE", gif: "purple", category: "colors" },
+      { gloss: "RED", gif: "red" },
+      { gloss: "BLUE", gif: "blue" },
+      { gloss: "GREEN", gif: "green" },
+      { gloss: "YELLOW", gif: "yellow" },
+      { gloss: "BLACK", gif: "black" },
+      { gloss: "PURPLE", gif: "purple" },
     ],
     color: "#000000",
   });
@@ -213,7 +169,7 @@ describe("Test deck updating", () => {
   beforeAll(async () => {
     testDocuments = await Utilities.mockUser(
       {
-        email: "TESTABOB",
+        email: "TESTDECK3",
         password: "1two3Four_flyya38480583yfklg",
       },
       { loggedIn: true, decks: [TEST_DECK] }
@@ -225,7 +181,7 @@ describe("Test deck updating", () => {
     setInputCards(TEST_CARDIDS);
 
     const differentUserDocuments = await Utilities.mockUser(
-      { email: "TESTY", password: "1two3Four_flyya38480583yfklg" },
+      { email: "TESTDECK4", password: "1two3Four_flyya38480583yfklg" },
       { decks: [TEST_DECK_DIFFERENT_USER] }
     );
     TEST_DIFFERENT_DECKID =
@@ -244,11 +200,13 @@ describe("Test deck updating", () => {
     postUpdate = await Utilities.getDeck(TEST_DECKID);
     expect(updateName.statusCode).toBe(200);
     expect(postUpdate.name).toBe(INPUT.NAME_ONLY.name);
+    expect(postUpdate.color).toBe("#000000");
 
     const updateColor = await send(INPUT.COLOR_ONLY);
     postUpdate = await Utilities.getDeck(TEST_DECKID);
     expect(updateColor.statusCode).toBe(200);
     expect(postUpdate.color).toBe(INPUT.COLOR_ONLY.color);
+    expect(postUpdate.name).toBe("NEW_NAME");
 
     const updateNameAndColor = await send(INPUT.NAME_AND_COLOR);
     postUpdate = await Utilities.getDeck(TEST_DECKID);
@@ -346,7 +304,7 @@ describe("Test deck updating", () => {
 
 describe("Test deck deletion", () => {
   const TEST_DECK = (TEST_DECK_DIFFERENT_USER = {
-    name: "TEST",
+    name: "TESTDECK5",
     cards: [],
     color: "#000000",
   });
