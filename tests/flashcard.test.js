@@ -49,7 +49,7 @@ describe("flashcard creation", () => {
   });
 
   test("Error for missing gloss", () => {
-    request(app)
+    return request(app)
       .post("/flashcard/create")
       .set("authorization", `${TEST_CREDENTIALS}`)
       .send(INPUT.MISSING_GLOSS)
@@ -60,24 +60,24 @@ describe("flashcard creation", () => {
   });
 
   test("Error for missing gif", () => {
-    request(app)
-    .post("/flashcard/create")
-    .set("authorization", `${TEST_CREDENTIALS}`)
-    .send(INPUT.MISSING_GLOSS)
-    .then((response) => {
-      expect(response.statusCode).toBe(400);
-      expect(response.body.errorMessage).toBe(FLASHCARDERRORS.MISSING_GIF.errorMessage);
-    });
+    return request(app)
+      .post("/flashcard/create")
+      .set("authorization", `${TEST_CREDENTIALS}`)
+      .send(INPUT.MISSING_GLOSS)
+      .then((response) => {
+        expect(response.statusCode).toBe(400);
+        expect(response.body.errorMessage).toBe(FLASHCARDERRORS.MISSING_GIF.errorMessage);
+      });
   });
   
   test("Error for invalid credentials", () => {
-    request(app)
-    .post("/flashcard/create")
-    .send({ gloss: "TEST", gif: "www.cards.com/test" })
-    .then((response) => {
-      expect(response.statusCode).toBe(403);
-      expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.UNAUTHORIZED.errorMessage);
-    });
+    return request(app)
+      .post("/flashcard/create")
+      .send({ gloss: "TEST", gif: "www.cards.com/test" })
+      .then((response) => {
+        expect(response.statusCode).toBe(403);
+        expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.UNAUTHORIZED.errorMessage);
+      });
   });
 });
 
@@ -125,12 +125,12 @@ describe("flashcard retrieval", () => {
   // });
   
   test("Error for invalid credentials", () => {
-    request(app)
-    .get(`/flashcard/index`)
-    .then((response) => {
-      expect(response.statusCode).toBe(403);
-      expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.NOT_SIGNED_IN.errorMessage);
-    });
+    return request(app)
+      .get(`/flashcard/index`)
+      .then((response) => {
+        expect(response.statusCode).toBe(403);
+        expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.NOT_SIGNED_IN.errorMessage);
+      });
   });
 });
 
@@ -181,12 +181,12 @@ describe("flashcard updating", () => {
   // });
 
   test("Error for invalid credentials", () => {
-    request(app)
-    .post(`/flashcard/${TEST_CARDID}/update`)
-    .then((response) => {
-      expect(response.statusCode).toBe(403);
-      expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.UNAUTHORIZED.errorMessage);
-    });
+    return request(app)
+      .post(`/flashcard/${TEST_CARDID}/update`)
+      .then((response) => {
+        expect(response.statusCode).toBe(403);
+        expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.UNAUTHORIZED.errorMessage);
+      });
   });
 
 });
@@ -233,17 +233,32 @@ describe("flashcard deletion", () => {
     return Utilities.tearDown(testDocuments);
   });
 
-  // test("POST /flashcard/:id/delete responds with success", () => {
+  test("POST /flashcard/:id/delete responds with success", async () => {
+    const deleteResponse = await request(app)
+      .post(`/flashcard/${TEST_CARDID}/delete`)
+      .set("authorization", `${TEST_CREDENTIALS}`);
+    const postDelete = await Utilities.getCards();
+    expect(deleteResponse.statusCode).toBe(200);
+    expect(postDelete.length).toBe(0);
+  });
 
-  // });
+  test("Error for invalid card Id", async () => {
+    const noCards = await Utilities.getCards();
+    expect(noCards.length).toBe(0);
+    const invalidIdResponse = await request(app)
+      .post(`/flashcard/${TEST_CARDID}/delete`)
+      .set("authorization", `${TEST_CREDENTIALS}`);
+    expect(invalidIdResponse.statusCode).toBe(400);
+    expect(invalidIdResponse.body.errorMessage).toBe(FLASHCARDERRORS.DELETE.CARD_NOT_FOUND.errorMessage);
+  });
 
   test("Error for invalid credentials", () => {
-    request(app)
-    .post(`/flashcard/${TEST_CARDID}/delete`)
-    .then((response) => {
-      expect(response.statusCode).toBe(403);
-      expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.UNAUTHORIZED.errorMessage);
-    });
+    return request(app)
+      .post(`/flashcard/${TEST_CARDID}/delete`)
+      .then((response) => {
+        expect(response.statusCode).toBe(403);
+        expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.UNAUTHORIZED.errorMessage);
+      });
   });
 
 });

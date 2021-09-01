@@ -161,6 +161,8 @@ describe("Test the login route", () => {
     expect(secondSession._id).toBe(firstSession._id);
   });
 
+  //insert test for login checking whether any user cards were deleted
+
   test("Error for missing email", () => {
     return request(app)
       .post("/auth/login")
