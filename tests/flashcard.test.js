@@ -144,9 +144,9 @@ describe("flashcard updating", () => {
   });
  
   const INPUT = {
-    NEW_FLASHCARD: { gloss: "TEST", gif: "www.cards.com/test", },
-    MISSING_GLOSS: { gif: "www.cards.com/test" },
-    MISSING_GIF: { gloss: "TEST" },
+    GLOSS_ONLY: { gloss: "TEST" },
+    GIF_ONLY: { gif: "www.cards.com/test" },
+    GLOSS_AND_GIF: { gloss: "BLUE", gif: "www.cards.com/blue" },
   };
 
   let TEST_CREDENTIALS;
@@ -176,7 +176,7 @@ describe("flashcard updating", () => {
     return Utilities.tearDown(testDocuments);
   });
 
-  // test("POST /flashcard/:id/update responds with success", () => {
+  // test("POST /flashcard/:id/update responds with success", async () => {
 
   // });
 
