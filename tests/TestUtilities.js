@@ -100,11 +100,16 @@ const getDeck = async (id) => {
   return await Deck.findById(id).exec();
 };
 
+const getCard = async (id) => {
+  return await Flashcard.findById(id).exec();
+};
+
 const getCards = async () => {
   return await Flashcard.find().exec();
 };
 
 module.exports = {
+  getCard: getCard,
   getCards: getCards,
   getDeck: getDeck,
   getUser: getUser,

@@ -176,9 +176,32 @@ describe("flashcard updating", () => {
     return Utilities.tearDown(testDocuments);
   });
 
-  // test("POST /flashcard/:id/update responds with success", async () => {
+  test("POST /flashcard/:id/update responds with success", async () => {
+    const glossOnlyResponse = await send(INPUT.GLOSS_ONLY);
+    let postUpdate = await Utilities.getCard(TEST_CARDID);
+    expect(glossOnlyResponse.statusCode).toBe(200);
+    expect(postUpdate.gloss).toBe(INPUT.GLOSS_ONLY.gloss);
+    expect(postUpdate.gif).toBe("red");
 
-  // });
+    const gifOnlyResponse = await send(INPUT.GIF_ONLY);
+    postUpdate = await send(TEST_CARDID);
+    expect(gifOnlyResponse.statusCode).toBe(200);
+    expect(postUpdate.gloss).toBe(INPUT.GLOSS_ONLY.gloss);
+    expect(postUpdate.gif).toBe(INPUT.GIF_ONLY.gif);
+
+    const glossAndGifResponse = await send(INPUT.GLOSS_AND_GIF);
+    postUpdate = await Utilities.getCard(TEST_CARDID);
+    expect(glossAndGifResponse.statusCode).toBe(200);
+    expect(postUpdate.gloss).toBe(INPUT.GLOSS_AND_GIF.gloss);
+    expect(postUpdate.gif).toBe(INPUT.GLOSS_AND_GIF.gif);
+
+    function send(input) {
+      return request(app)
+        .post(`/card/${TEST_CARDID}/update`)
+        .set("authorization", `${TEST_CREDENTIALS}`)
+        .send(input);
+    }
+  });
 
   test("Error for invalid credentials", () => {
     return request(app)
