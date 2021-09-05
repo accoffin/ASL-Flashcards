@@ -13,7 +13,7 @@ describe("flashcard creation", () => {
     MISSING_GIF: { gloss: "TEST" },
   };
 
-  let TEST_CREDENTIALS;
+  let TEST_CREDENTIALS, TEST_NONADMINCREDENTIALS;
   let TEST_USERID;
 
   let testDocuments;
@@ -28,6 +28,18 @@ describe("flashcard creation", () => {
     );
     TEST_CREDENTIALS = testDocuments[testDocuments.length - 1].id;
     TEST_USERID = testDocuments[testDocuments.length - 2].id;
+
+    const nonAdminUserDocs = await Utilities.mockUser(
+      {
+        email: "NONADMIN2",
+        password: "1two3Four_flyya38480583yfklg",
+      },
+      {
+        loggedIn: true
+      }
+    );
+    TEST_NONADMINCREDENTIALS = nonAdminUserDocs[nonAdminUserDocs.length - 1].id;
+    testDocuments.push(...nonAdminUserDocs);
   });
 
   afterAll(() => {
@@ -73,6 +85,17 @@ describe("flashcard creation", () => {
   test("Error for invalid credentials", () => {
     return request(app)
       .post("/flashcard/create")
+      .send({ gloss: "TEST", gif: "www.cards.com/test" })
+      .then((response) => {
+        expect(response.statusCode).toBe(403);
+        expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.NOT_SIGNED_IN.errorMessage);
+      });
+  });
+
+  test("Error for unauthorized user", () => {
+    return request(app)
+      .post(`/flashcard/create`)
+      .set("authorization", `${TEST_NONADMINCREDENTIALS}`)
       .send({ gloss: "TEST", gif: "www.cards.com/test" })
       .then((response) => {
         expect(response.statusCode).toBe(403);
@@ -149,7 +172,7 @@ describe("flashcard updating", () => {
     GLOSS_AND_GIF: { gloss: "BLUE", gif: "www.cards.com/blue" },
   };
 
-  let TEST_CREDENTIALS;
+  let TEST_CREDENTIALS, TEST_NONADMINCREDENTIALS;
   let TEST_USERID, TEST_CARDID;
 
   let testDocuments;
@@ -170,6 +193,17 @@ describe("flashcard updating", () => {
     TEST_USERID = testDocuments[testDocuments.length - 2].id;
     TEST_CARDID = testDocuments[0].id;
 
+    const nonAdminUserDocs = await Utilities.mockUser(
+      {
+        email: "NONADMIN2",
+        password: "1two3Four_flyya38480583yfklg",
+      },
+      {
+        loggedIn: true
+      }
+    );
+    TEST_NONADMINCREDENTIALS = nonAdminUserDocs[nonAdminUserDocs.length - 1].id;
+    testDocuments.push(...nonAdminUserDocs);
   });
 
   afterAll(() => {
@@ -208,10 +242,19 @@ describe("flashcard updating", () => {
       .post(`/flashcard/${TEST_CARDID}/update`)
       .then((response) => {
         expect(response.statusCode).toBe(403);
-        expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.UNAUTHORIZED.errorMessage);
+        expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.NOT_SIGNED_IN.errorMessage);
       });
   });
 
+  test("Error for unauthorized user", () => {
+    return request(app)
+      .post(`/flashcard/${TEST_CARDID}/update`)
+      .set("authorization", `${TEST_NONADMINCREDENTIALS}`)
+      .then((response) => {
+        expect(response.statusCode).toBe(403);
+        expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.UNAUTHORIZED.errorMessage);
+      });
+  });
 });
 
 describe("flashcard deletion", () => {
@@ -229,7 +272,7 @@ describe("flashcard deletion", () => {
     MISSING_GIF: { gloss: "TEST" },
   };
 
-  let TEST_CREDENTIALS;
+  let TEST_CREDENTIALS, TEST_NONADMINCREDENTIALS;
   let TEST_USERID, TEST_CARDID;
 
   let testDocuments;
@@ -250,6 +293,17 @@ describe("flashcard deletion", () => {
     TEST_USERID = testDocuments[testDocuments.length - 2].id;
     TEST_CARDID = testDocuments[0].id;
 
+    const nonAdminUserDocs = await Utilities.mockUser(
+      {
+        email: "NONADMIN2",
+        password: "1two3Four_flyya38480583yfklg",
+      },
+      {
+        loggedIn: true
+      }
+    );
+    TEST_NONADMINCREDENTIALS = nonAdminUserDocs[nonAdminUserDocs.length - 1].id;
+    testDocuments.push(...nonAdminUserDocs);
   });
 
   afterAll(() => {
@@ -280,8 +334,17 @@ describe("flashcard deletion", () => {
       .post(`/flashcard/${TEST_CARDID}/delete`)
       .then((response) => {
         expect(response.statusCode).toBe(403);
-        expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.UNAUTHORIZED.errorMessage);
+        expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.NOT_SIGNED_IN.errorMessage);
       });
   });
 
+  test("Error for unauthorized user", () => {
+    return request(app)
+      .post(`/flashcard/${TEST_CARDID}/delete`)
+      .set("authorization", `${TEST_NONADMINCREDENTIALS}`)
+      .then((response) => {
+        expect(response.statusCode).toBe(403);
+        expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.UNAUTHORIZED.errorMessage);
+      });
+  });
 });
