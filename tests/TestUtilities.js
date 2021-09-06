@@ -108,9 +108,19 @@ const getCards = async () => {
   return await Flashcard.find().exec();
 };
 
+const compareCards = (set1, set2) => {
+  if (set1.length !== set2.length) return false;
+  for (let i = 0; i < set1.length; i++) {
+    if (set1[i].gloss !== set2[i].gloss) return false;
+    if (set1[i].gif !== set2[i].gif) return false;
+  }
+  return true;
+};
+
 module.exports = {
   getCard: getCard,
   getCards: getCards,
+  compareCards: compareCards,
   getDeck: getDeck,
   getUser: getUser,
   getSession: getSession,

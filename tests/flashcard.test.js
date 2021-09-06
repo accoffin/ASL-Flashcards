@@ -105,10 +105,22 @@ describe("flashcard creation", () => {
 });
 
 describe("flashcard retrieval", () => {
+  const TEST_DECK = (TEST_DECK_DIFFERENT_USER = {
+    name: "TEST",
+    cards: [
+      { gloss: "RED", gif: "red" },
+      { gloss: "BLUE", gif: "blue" },
+      { gloss: "GREEN", gif: "green" },
+      { gloss: "YELLOW", gif: "yellow" },
+      { gloss: "BLACK", gif: "black" },
+      { gloss: "PURPLE", gif: "purple" },
+    ],
+    color: "#000000",
+  });
  
-  const INPUT = {
-    // NEW_FLASHCARD: { gloss: "TEST", gif: "www.cards.com/test", },
-  };
+  // const INPUT = {
+  //   NEW_FLASHCARD: { gloss: "TEST", gif: "www.cards.com/test", },
+  // };
 
   let TEST_CREDENTIALS;
   let TEST_USERID;
@@ -121,7 +133,7 @@ describe("flashcard retrieval", () => {
         email: "FLASHCARDTEST1",
         password: "1two3Four_flyya38480583yfklg",
       },
-      { loggedIn: true }
+      { loggedIn: true, decks: [TEST_DECK] }
     );
     TEST_CREDENTIALS = testDocuments[testDocuments.length - 1].id;
     TEST_USERID = testDocuments[testDocuments.length - 2].id;
@@ -131,9 +143,15 @@ describe("flashcard retrieval", () => {
     return Utilities.tearDown(testDocuments);
   });
 
-  // test("GET /flashcard/index responds with all flashcards", () => {
-
-  // });
+  test("GET /flashcard/index responds with all flashcards", () => {
+    return request(app)
+      .get("/flashcard/index")
+      .set("authorization", `${TEST_CREDENTIALS}`)
+      .then(response => {
+        expect(response.statusCode).toBe(200);
+        expect(Utilities.compareCards(response.body, TEST_DECK.cards)).toBe(true);
+      });
+  });
 
   // test("GET /flashcard/index?limit=n responds with the first n flashcards", () => {
 
