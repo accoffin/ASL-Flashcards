@@ -149,13 +149,24 @@ describe("flashcard retrieval", () => {
       .set("authorization", `${TEST_CREDENTIALS}`)
       .then(response => {
         expect(response.statusCode).toBe(200);
-        expect(Utilities.compareCards(response.body, TEST_DECK.cards)).toBe(true);
+        expect(Utilities.cardSetsEqual(response.body, TEST_DECK.cards)).toBe(true);
       });
   });
 
-  // test("GET /flashcard/index?limit=n responds with the first n flashcards", () => {
+  test("GET /flashcard/index?limit=n responds with the first n flashcards", () => {
+    const TEST_LIMIT = 3;
+    const [firstCard, secondCard, thirdCard] = TEST_DECK.cards;
+    const firstThreeCards = [ firstCard, secondCard, thirdCard ];
 
-  // });
+    return request(app)
+      .get(`/flashcard/index?limit=${TEST_LIMIT}`)
+      .set("authorization", `${TEST_CREDENTIALS}`)
+      .then(response => {
+        expect(response.statusCode).toBe(200);
+        expect(response.body.length).toBe(TEST_LIMIT);
+        expect(Utilities.cardSetsEqual(response.body, firstThreeCards)).toBe(true);
+      });
+  });
 
   // test("GET /flashcard/index?skip=m&limit=n responds with the first n flashcards after the mth", () => {
 
