@@ -13,7 +13,7 @@ describe("flashcard creation", () => {
     MISSING_GIF: { gloss: "TEST" },
   };
 
-  let TEST_CREDENTIALS;
+  let TEST_CREDENTIALS, TEST_NONADMINCREDENTIALS;
   let TEST_USERID;
 
   let testDocuments;
@@ -28,6 +28,18 @@ describe("flashcard creation", () => {
     );
     TEST_CREDENTIALS = testDocuments[testDocuments.length - 1].id;
     TEST_USERID = testDocuments[testDocuments.length - 2].id;
+
+    const nonAdminUserDocs = await Utilities.mockUser(
+      {
+        email: "NONADMIN2",
+        password: "1two3Four_flyya38480583yfklg",
+      },
+      {
+        loggedIn: true
+      }
+    );
+    TEST_NONADMINCREDENTIALS = nonAdminUserDocs[nonAdminUserDocs.length - 1].id;
+    testDocuments.push(...nonAdminUserDocs);
   });
 
   afterAll(() => {
@@ -49,7 +61,7 @@ describe("flashcard creation", () => {
   });
 
   test("Error for missing gloss", () => {
-    request(app)
+    return request(app)
       .post("/flashcard/create")
       .set("authorization", `${TEST_CREDENTIALS}`)
       .send(INPUT.MISSING_GLOSS)
@@ -60,32 +72,55 @@ describe("flashcard creation", () => {
   });
 
   test("Error for missing gif", () => {
-    request(app)
-    .post("/flashcard/create")
-    .set("authorization", `${TEST_CREDENTIALS}`)
-    .send(INPUT.MISSING_GLOSS)
-    .then((response) => {
-      expect(response.statusCode).toBe(400);
-      expect(response.body.errorMessage).toBe(FLASHCARDERRORS.MISSING_GIF.errorMessage);
-    });
+    return request(app)
+      .post("/flashcard/create")
+      .set("authorization", `${TEST_CREDENTIALS}`)
+      .send(INPUT.MISSING_GLOSS)
+      .then((response) => {
+        expect(response.statusCode).toBe(400);
+        expect(response.body.errorMessage).toBe(FLASHCARDERRORS.MISSING_GIF.errorMessage);
+      });
   });
   
   test("Error for invalid credentials", () => {
-    request(app)
-    .post("/flashcard/create")
-    .send({ gloss: "TEST", gif: "www.cards.com/test" })
-    .then((response) => {
-      expect(response.statusCode).toBe(403);
-      expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.UNAUTHORIZED.errorMessage);
-    });
+    return request(app)
+      .post("/flashcard/create")
+      .send({ gloss: "TEST", gif: "www.cards.com/test" })
+      .then((response) => {
+        expect(response.statusCode).toBe(403);
+        expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.NOT_SIGNED_IN.errorMessage);
+      });
+  });
+
+  test("Error for unauthorized user", () => {
+    return request(app)
+      .post(`/flashcard/create`)
+      .set("authorization", `${TEST_NONADMINCREDENTIALS}`)
+      .send({ gloss: "TEST", gif: "www.cards.com/test" })
+      .then((response) => {
+        expect(response.statusCode).toBe(403);
+        expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.UNAUTHORIZED.errorMessage);
+      });
   });
 });
 
 describe("flashcard retrieval", () => {
+  const TEST_DECK = (TEST_DECK_DIFFERENT_USER = {
+    name: "TEST",
+    cards: [
+      { gloss: "RED", gif: "red" },
+      { gloss: "BLUE", gif: "blue" },
+      { gloss: "GREEN", gif: "green" },
+      { gloss: "YELLOW", gif: "yellow" },
+      { gloss: "BLACK", gif: "black" },
+      { gloss: "PURPLE", gif: "purple" },
+    ],
+    color: "#000000",
+  });
  
-  const INPUT = {
-    // NEW_FLASHCARD: { gloss: "TEST", gif: "www.cards.com/test", },
-  };
+  // const INPUT = {
+  //   NEW_FLASHCARD: { gloss: "TEST", gif: "www.cards.com/test", },
+  // };
 
   let TEST_CREDENTIALS;
   let TEST_USERID;
@@ -98,7 +133,7 @@ describe("flashcard retrieval", () => {
         email: "FLASHCARDTEST1",
         password: "1two3Four_flyya38480583yfklg",
       },
-      { loggedIn: true }
+      { loggedIn: true, decks: [TEST_DECK] }
     );
     TEST_CREDENTIALS = testDocuments[testDocuments.length - 1].id;
     TEST_USERID = testDocuments[testDocuments.length - 2].id;
@@ -108,13 +143,30 @@ describe("flashcard retrieval", () => {
     return Utilities.tearDown(testDocuments);
   });
 
-  // test("GET /flashcard/index responds with all flashcards", () => {
+  test("GET /flashcard/index responds with all flashcards", () => {
+    return request(app)
+      .get("/flashcard/index")
+      .set("authorization", `${TEST_CREDENTIALS}`)
+      .then(response => {
+        expect(response.statusCode).toBe(200);
+        expect(Utilities.cardSetsEqual(response.body, TEST_DECK.cards)).toBe(true);
+      });
+  });
 
-  // });
+  test("GET /flashcard/index?limit=n responds with the first n flashcards", () => {
+    const TEST_LIMIT = 3;
+    const [firstCard, secondCard, thirdCard] = TEST_DECK.cards;
+    const firstThreeCards = [ firstCard, secondCard, thirdCard ];
 
-  // test("GET /flashcard/index?limit=n responds with the first n flashcards", () => {
-
-  // });
+    return request(app)
+      .get(`/flashcard/index?limit=${TEST_LIMIT}`)
+      .set("authorization", `${TEST_CREDENTIALS}`)
+      .then(response => {
+        expect(response.statusCode).toBe(200);
+        expect(response.body.length).toBe(TEST_LIMIT);
+        expect(Utilities.cardSetsEqual(response.body, firstThreeCards)).toBe(true);
+      });
+  });
 
   // test("GET /flashcard/index?skip=m&limit=n responds with the first n flashcards after the mth", () => {
 
@@ -125,12 +177,12 @@ describe("flashcard retrieval", () => {
   // });
   
   test("Error for invalid credentials", () => {
-    request(app)
-    .get(`/flashcard/index`)
-    .then((response) => {
-      expect(response.statusCode).toBe(403);
-      expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.NOT_SIGNED_IN.errorMessage);
-    });
+    return request(app)
+      .get(`/flashcard/index`)
+      .then((response) => {
+        expect(response.statusCode).toBe(403);
+        expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.NOT_SIGNED_IN.errorMessage);
+      });
   });
 });
 
@@ -144,12 +196,12 @@ describe("flashcard updating", () => {
   });
  
   const INPUT = {
-    NEW_FLASHCARD: { gloss: "TEST", gif: "www.cards.com/test", },
-    MISSING_GLOSS: { gif: "www.cards.com/test" },
-    MISSING_GIF: { gloss: "TEST" },
+    GLOSS_ONLY: { gloss: "TEST" },
+    GIF_ONLY: { gif: "www.cards.com/test" },
+    GLOSS_AND_GIF: { gloss: "BLUE", gif: "www.cards.com/blue" },
   };
 
-  let TEST_CREDENTIALS;
+  let TEST_CREDENTIALS, TEST_NONADMINCREDENTIALS;
   let TEST_USERID, TEST_CARDID;
 
   let testDocuments;
@@ -170,25 +222,68 @@ describe("flashcard updating", () => {
     TEST_USERID = testDocuments[testDocuments.length - 2].id;
     TEST_CARDID = testDocuments[0].id;
 
+    const nonAdminUserDocs = await Utilities.mockUser(
+      {
+        email: "NONADMIN2",
+        password: "1two3Four_flyya38480583yfklg",
+      },
+      {
+        loggedIn: true
+      }
+    );
+    TEST_NONADMINCREDENTIALS = nonAdminUserDocs[nonAdminUserDocs.length - 1].id;
+    testDocuments.push(...nonAdminUserDocs);
   });
 
   afterAll(() => {
     return Utilities.tearDown(testDocuments);
   });
 
-  // test("POST /flashcard/:id/update responds with success", () => {
+  test("POST /flashcard/:id/update responds with success", async () => {
+    const glossOnlyResponse = await send(INPUT.GLOSS_ONLY);
+    let postUpdate = await Utilities.getCard(TEST_CARDID);
+    expect(glossOnlyResponse.statusCode).toBe(200);
+    expect(postUpdate.gloss).toBe(INPUT.GLOSS_ONLY.gloss);
+    expect(postUpdate.gif).toBe("red");
 
-  // });
+    const gifOnlyResponse = await send(INPUT.GIF_ONLY);
+    postUpdate = await send(TEST_CARDID);
+    expect(gifOnlyResponse.statusCode).toBe(200);
+    expect(postUpdate.gloss).toBe(INPUT.GLOSS_ONLY.gloss);
+    expect(postUpdate.gif).toBe(INPUT.GIF_ONLY.gif);
 
-  test("Error for invalid credentials", () => {
-    request(app)
-    .post(`/flashcard/${TEST_CARDID}/update`)
-    .then((response) => {
-      expect(response.statusCode).toBe(403);
-      expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.UNAUTHORIZED.errorMessage);
-    });
+    const glossAndGifResponse = await send(INPUT.GLOSS_AND_GIF);
+    postUpdate = await Utilities.getCard(TEST_CARDID);
+    expect(glossAndGifResponse.statusCode).toBe(200);
+    expect(postUpdate.gloss).toBe(INPUT.GLOSS_AND_GIF.gloss);
+    expect(postUpdate.gif).toBe(INPUT.GLOSS_AND_GIF.gif);
+
+    function send(input) {
+      return request(app)
+        .post(`/card/${TEST_CARDID}/update`)
+        .set("authorization", `${TEST_CREDENTIALS}`)
+        .send(input);
+    }
   });
 
+  test("Error for invalid credentials", () => {
+    return request(app)
+      .post(`/flashcard/${TEST_CARDID}/update`)
+      .then((response) => {
+        expect(response.statusCode).toBe(403);
+        expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.NOT_SIGNED_IN.errorMessage);
+      });
+  });
+
+  test("Error for unauthorized user", () => {
+    return request(app)
+      .post(`/flashcard/${TEST_CARDID}/update`)
+      .set("authorization", `${TEST_NONADMINCREDENTIALS}`)
+      .then((response) => {
+        expect(response.statusCode).toBe(403);
+        expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.UNAUTHORIZED.errorMessage);
+      });
+  });
 });
 
 describe("flashcard deletion", () => {
@@ -206,7 +301,7 @@ describe("flashcard deletion", () => {
     MISSING_GIF: { gloss: "TEST" },
   };
 
-  let TEST_CREDENTIALS;
+  let TEST_CREDENTIALS, TEST_NONADMINCREDENTIALS;
   let TEST_USERID, TEST_CARDID;
 
   let testDocuments;
@@ -227,23 +322,58 @@ describe("flashcard deletion", () => {
     TEST_USERID = testDocuments[testDocuments.length - 2].id;
     TEST_CARDID = testDocuments[0].id;
 
+    const nonAdminUserDocs = await Utilities.mockUser(
+      {
+        email: "NONADMIN2",
+        password: "1two3Four_flyya38480583yfklg",
+      },
+      {
+        loggedIn: true
+      }
+    );
+    TEST_NONADMINCREDENTIALS = nonAdminUserDocs[nonAdminUserDocs.length - 1].id;
+    testDocuments.push(...nonAdminUserDocs);
   });
 
   afterAll(() => {
     return Utilities.tearDown(testDocuments);
   });
 
-  // test("POST /flashcard/:id/delete responds with success", () => {
-
-  // });
-
-  test("Error for invalid credentials", () => {
-    request(app)
-    .post(`/flashcard/${TEST_CARDID}/delete`)
-    .then((response) => {
-      expect(response.statusCode).toBe(403);
-      expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.UNAUTHORIZED.errorMessage);
-    });
+  test("POST /flashcard/:id/delete responds with success", async () => {
+    const deleteResponse = await request(app)
+      .post(`/flashcard/${TEST_CARDID}/delete`)
+      .set("authorization", `${TEST_CREDENTIALS}`);
+    const postDelete = await Utilities.getCards();
+    expect(deleteResponse.statusCode).toBe(200);
+    expect(postDelete.length).toBe(0);
   });
 
+  test("Error for invalid card Id", async () => {
+    const noCards = await Utilities.getCards();
+    expect(noCards.length).toBe(0);
+    const invalidIdResponse = await request(app)
+      .post(`/flashcard/${TEST_CARDID}/delete`)
+      .set("authorization", `${TEST_CREDENTIALS}`);
+    expect(invalidIdResponse.statusCode).toBe(400);
+    expect(invalidIdResponse.body.errorMessage).toBe(FLASHCARDERRORS.DELETE.CARD_NOT_FOUND.errorMessage);
+  });
+
+  test("Error for invalid credentials", () => {
+    return request(app)
+      .post(`/flashcard/${TEST_CARDID}/delete`)
+      .then((response) => {
+        expect(response.statusCode).toBe(403);
+        expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.NOT_SIGNED_IN.errorMessage);
+      });
+  });
+
+  test("Error for unauthorized user", () => {
+    return request(app)
+      .post(`/flashcard/${TEST_CARDID}/delete`)
+      .set("authorization", `${TEST_NONADMINCREDENTIALS}`)
+      .then((response) => {
+        expect(response.statusCode).toBe(403);
+        expect(response.body.errorMessage).toBe(FLASHCARDERRORS.AUTH.UNAUTHORIZED.errorMessage);
+      });
+  });
 });
