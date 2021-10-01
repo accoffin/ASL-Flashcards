@@ -97,16 +97,17 @@ describe("Test the signup route", () => {
 describe("Test the login route", () => {
   const TEST_EMAIL = "AUTHTEST1";
   const TEST_PASSWORD = "1two3Four_flyya38480583yfklg";
-  const TEST_CARD = {
-    gloss: "TEST",
-    gif: "No URL for gif",
-    category: "common phrases",
-  };
 
-  let TEST_USER;
+  let testDocuments;
+
+  const TEST_MISSING_CARDS = [
+    { gloss: "RED", gif: "red" },
+    { gloss: "GREEN", gif: "green" },
+    { gloss: "PURPLE", gif: "purple" },
+  ];
 
   beforeAll(async () => {
-    TEST_USER = await Utilities.mockUser(
+    testDocuments = await Utilities.mockUser(
       {
         email: TEST_EMAIL,
         password: TEST_PASSWORD,
@@ -116,15 +117,25 @@ describe("Test the login route", () => {
           {
             name: "First Deck!",
             color: "#000000",
-            cards: [TEST_CARD],
+            cards: [
+              { gloss: "RED", gif: "red" },
+              { gloss: "BLUE", gif: "blue" },
+              { gloss: "GREEN", gif: "green" },
+              { gloss: "YELLOW", gif: "yellow" },
+              { gloss: "BLACK", gif: "black" },
+              { gloss: "PURPLE", gif: "purple" },
+            ],
           },
         ],
       }
     );
+    
+    const missingCardsOnLogin = [testDocuments[0].id, testDocuments[2].id, testDocuments[5].id];
+    await Utilities.tearDown(missingCardsOnLogin);
   });
 
   afterAll(() => {
-    return Utilities.tearDown(TEST_USER);
+    return Utilities.tearDown(testDocuments);
   });
 
   test("POST /auth/login responds with User and Session", async () => {
@@ -143,12 +154,17 @@ describe("Test the login route", () => {
     const currentDeck = firstUser.currentDeck;
     expect(currentDeck.name).toBeDefined();
     expect(currentDeck.cards).toBeDefined();
+    //expect currentDeck not to include red, green, or purple
+    expect(currentDeck.cards.length).toBe(3);
+    expect(currentDeck.cards).not.toContainEqual(TEST_MISSING_CARDS[0]);
+    expect(currentDeck.cards).not.toContainEqual(TEST_MISSING_CARDS[1]);
+    expect(currentDeck.cards).not.toContainEqual(TEST_MISSING_CARDS[2]);
     expect(currentDeck.color).toBeDefined();
     const cardInDeck = currentDeck.cards[0];
     expect(cardInDeck.gloss).toBeDefined();
     expect(cardInDeck.gif).toBeDefined();
     expect(Object.keys(cardInDeck).length).toBe(2);
-    TEST_USER.push({ type: "session", id: firstSession._id });
+    testDocuments.push({ type: "session", id: firstSession._id });
 
     const didSessionRecycleResponse = await request(app)
       .post("/auth/login")
@@ -160,8 +176,6 @@ describe("Test the login route", () => {
     expect(didSessionRecycleResponse.statusCode).toBe(200);
     expect(secondSession._id).toBe(firstSession._id);
   });
-
-  //insert test for login checking whether any user cards were deleted
 
   test("Error for missing email", () => {
     return request(app)

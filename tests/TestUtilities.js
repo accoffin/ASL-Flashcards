@@ -15,11 +15,6 @@ const MODELS = {
 
 const SESSION_EXPIRATION = 1000 * 60 * 30; //Sessions live for 30 minutes
 
-const createCard = (card) => {
-  const idCollection = [];
-  return idCollection;
-};
-
 const createDeck = async (deck, { cards }) => {
   const idCollection = [];
   if (cards) {
@@ -117,41 +112,42 @@ const cardSetsEqual = (set1, set2) => {
   return true;
 };
 
-module.exports = {
-  getCard: getCard,
-  getCards: getCards,
-  cardSetsEqual: cardSetsEqual,
-  getDeck: getDeck,
-  getUser: getUser,
-  getSession: getSession,
-  mockCard: createCard,
-  mockDeck: createDeck,
-  mockUser: createUser,
-  tearDown: (idCollection) => {
-    const documentDeletions = [];
-    for (const document of idCollection) {
-      const { type, id } = document;
-      let deletionPromise;
-      switch (type) {
-        case MODELS.SESSION:
-          deletionPromise = Session.findByIdAndDelete(id).exec();
-          break;
-        case MODELS.USER:
-          deletionPromise = User.findByIdAndDelete(id).exec();
-          break;
-        case MODELS.DECK:
-          deletionPromise = Deck.findByIdAndDelete(id).exec();
-          break;
-        case MODELS.CARD:
-          deletionPromise = Flashcard.findByIdAndDelete(id).exec();
-          break;
-        default:
-          break;
-      }
-      if (deletionPromise) documentDeletions.push(deletionPromise);
+const tearDown = (idCollection) => {
+  const documentDeletions = [];
+  for (const document of idCollection) {
+    const { type, id } = document;
+    let deletionPromise;
+    switch (type) {
+      case MODELS.SESSION:
+        deletionPromise = Session.findByIdAndDelete(id).exec();
+        break;
+      case MODELS.USER:
+        deletionPromise = User.findByIdAndDelete(id).exec();
+        break;
+      case MODELS.DECK:
+        deletionPromise = Deck.findByIdAndDelete(id).exec();
+        break;
+      case MODELS.CARD:
+        deletionPromise = Flashcard.findByIdAndDelete(id).exec();
+        break;
+      default:
+        break;
     }
-    return Promise.all(documentDeletions).catch(() => {
-      console.log("Warning: teardown failed");
-    });
-  },
+    if (deletionPromise) documentDeletions.push(deletionPromise);
+  }
+  return Promise.all(documentDeletions).catch(() => {
+    console.log("Warning: teardown failed");
+  });
+};
+
+module.exports = {
+  getCard,
+  getCards,
+  cardSetsEqual,
+  getDeck,
+  getUser,
+  getSession,
+  createDeck,
+  mockUser: createUser,
+  tearDown,
 };

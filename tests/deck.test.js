@@ -74,6 +74,8 @@ describe("Test individual deck retrieval", () => {
     TEST_DIFFERENT_DECKID =
       differentUserDocuments[differentUserDocuments.length - 2].id;
     testDocuments.push(...differentUserDocuments);
+
+    //TODO: set conditions to delete cards before test
   });
 
   afterAll(() => {
@@ -90,6 +92,7 @@ describe("Test individual deck retrieval", () => {
     expect(cardInDeck?.gif).toBeDefined;
     expect(Object.keys(cardInDeck).length).toBe(2);
     expect(response.body).toStrictEqual(TEST_CARDS);
+    //TODO: test that response does not contain deleted cards
   });
 
   test("Error for invalid credentials", () => {
