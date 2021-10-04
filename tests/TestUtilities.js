@@ -2,6 +2,7 @@ const User = require("../models/User.model");
 const Session = require("../models/Session.model");
 const Deck = require("../models/Deck.model");
 const Flashcard = require("../models/Flashcard.model");
+const ServerStates = require("../models/ServerStates.model");
 
 const bcrypt = require("bcryptjs");
 const saltRounds = 10;
@@ -112,6 +113,22 @@ const cardSetsEqual = (set1, set2) => {
   return true;
 };
 
+const removeCards = async (idCollection) => {
+  const cardDeletions = [];
+  for (const document of idCollection) {
+    const { type, id } = document;
+    if (type === MODELS.CARD) {
+      const deletionPromise = Flashcard.findByIdAndDelete(id).exec();
+      cardDeletions.push(deletionPromise);
+    }
+  }
+  let serverState = await ServerStates.findOne().exec();
+  if (!serverState) serverState = await ServerStates.create({});
+  serverState.flashcardSetVersion += 1;
+  await serverState.save();
+  return Promise.all(cardDeletions).catch(() => { console.log("Warning: teardown failed") })
+};
+
 const tearDown = (idCollection) => {
   const documentDeletions = [];
   for (const document of idCollection) {
@@ -144,6 +161,7 @@ module.exports = {
   getCard,
   getCards,
   cardSetsEqual,
+  removeCards,
   getDeck,
   getUser,
   getSession,

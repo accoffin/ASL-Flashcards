@@ -131,7 +131,7 @@ describe("Test the login route", () => {
     );
     
     const missingCardsOnLogin = [testDocuments[0].id, testDocuments[2].id, testDocuments[5].id];
-    await Utilities.tearDown(missingCardsOnLogin);
+    await Utilities.removeCards(missingCardsOnLogin);
   });
 
   afterAll(() => {
